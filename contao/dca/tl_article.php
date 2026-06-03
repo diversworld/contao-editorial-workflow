@@ -23,7 +23,13 @@ $GLOBALS['TL_DCA'][$table]['fields']['workflow_comment'] = [
     'sql'       => "text NULL",
 ];
 
-PaletteManipulator::create()
-    ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
-    ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND)
-    ->applyToPalette('default', $table);
+if (isset($GLOBALS['TL_DCA'][$table]['palettes']) && is_array($GLOBALS['TL_DCA'][$table]['palettes'])) {
+    foreach ($GLOBALS['TL_DCA'][$table]['palettes'] as $name => $palette) {
+        if (is_string($palette)) {
+            PaletteManipulator::create()
+                ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
+                ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND)
+                ->applyToPalette($name, $table);
+        }
+    }
+}

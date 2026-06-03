@@ -12,3 +12,9 @@ $GLOBALS['TL_LANG']['MSC']['workflow_status_ref'] = [
     'published' => 'Published',
     'archived'  => 'Archived',
 ];
+
+$GLOBALS['TL_LANG']['tl_user']['editorial_workflow_permissions'] = ['Workflow Permissions', 'Define which workflow roles the user or group possesses.'];
+$GLOBALS['TL_LANG']['tl_user']['editorial_workflow_permissions_ref'] = [
+    'reviewer' => 'Reviewer (may approve/reject)',
+    'publisher' => 'Publisher (may publish)',
+];

@@ -27,15 +27,13 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
-                ->arrayNode('foo')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('bar')
-                            ->cannotBeEmpty()
-                            ->defaultValue('***')
-                        ->end()
-                    ->end()
-                ->end() // end foo
+            ->booleanNode('four_eyes_principle')
+            ->defaultTrue()
+            ->end()
+            ->arrayNode('enabled_tables')
+            ->scalarPrototype()->end()
+            ->defaultValue(['tl_page', 'tl_article', 'tl_content', 'tl_news', 'tl_calendar_events', 'tl_faq'])
+            ->end()
             ->end()
         ;
 

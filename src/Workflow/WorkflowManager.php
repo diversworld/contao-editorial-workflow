@@ -5,23 +5,37 @@ namespace Diversworld\ContaoEditorialWorkflow\Workflow;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\BackendUser;
 use Doctrine\DBAL\Connection;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class WorkflowManager
 {
     private $framework;
     private $db;
     private $security;
+    private $fourEyesPrinciple;
+    private $enabledTables;
 
-    public function __construct(ContaoFramework $framework, Connection $db, Security $security)
+    public function __construct(
+        ContaoFramework $framework,
+        Connection      $db,
+        Security        $security,
+        bool            $fourEyesPrinciple,
+        array           $enabledTables
+    )
     {
         $this->framework = $framework;
         $this->db = $db;
         $this->security = $security;
+        $this->fourEyesPrinciple = $fourEyesPrinciple;
+        $this->enabledTables = $enabledTables;
     }
 
     public function canChangeStatus($table, $id, $newStatus): bool
     {
+        if (!in_array($table, $this->enabledTables, true)) {
+            return true;
+        }
+
         $user = $this->security->getUser();
         if (!$user instanceof BackendUser) {
             return false;
@@ -34,17 +48,37 @@ class WorkflowManager
         $currentStatus = $this->getCurrentStatus($table, $id);
 
         // Vier-Augen-Prinzip
-        if ($newStatus === WorkflowStatus::STATUS_APPROVED && $this->isAuthor($table, $id, $user->id)) {
-            // Falls konfiguriert, darf der Autor nicht selbst freigeben
-            // return false;
+        if ($this->fourEyesPrinciple && $newStatus === WorkflowStatus::STATUS_APPROVED) {
+            if ($this->isAuthor($table, $id, (int)$user->id)) {
+                return false;
+            }
         }
 
-        // Grundlegende Rollenprüfung (vereinfacht)
+        // Rollenprüfung
         if ($newStatus === WorkflowStatus::STATUS_APPROVED || $newStatus === WorkflowStatus::STATUS_REJECTED) {
-            return $user->hasAccess('editorial_workflow', 'reviewer');
+            return $this->hasWorkflowPermission('reviewer');
+        }
+
+        if ($newStatus === WorkflowStatus::STATUS_PUBLISHED) {
+            return $this->hasWorkflowPermission('publisher');
         }
 
         return true;
+    }
+
+    private function hasWorkflowPermission(string $role): bool
+    {
+        $user = $this->security->getUser();
+        if (!$user instanceof BackendUser) {
+            return false;
+        }
+
+        $permissions = $user->editorial_workflow_permissions;
+        if (!is_array($permissions)) {
+            $permissions = deserialize($permissions, true);
+        }
+
+        return in_array($role, $permissions, true);
     }
 
     private function getCurrentStatus($table, $id): string
@@ -55,9 +89,10 @@ class WorkflowManager
 
     private function isAuthor($table, $id, $userId): bool
     {
-        // Prüfung, ob der User die letzte Änderung (außer Statusänderung) gemacht hat
-        // Oder Prüfung via Contao Versionierung
-        return false;
+        // Prüfung via Contao Versionierung (wer hat die letzte Version erstellt)
+        $authorId = $this->db->fetchOne("SELECT userid FROM tl_version WHERE fromTable = ? AND pid = ? ORDER BY version DESC LIMIT 1", [$table, $id]);
+
+        return (int)$authorId === $userId;
     }
 
     public function logStatusChange($table, $id, $fromStatus, $toStatus, $comment = '', $version = 0)

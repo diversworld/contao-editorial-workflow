@@ -42,9 +42,10 @@ class DiversworldContaoEditorialWorkflowExtension extends Extension
 
         $loader->load('parameters.yaml');
         $loader->load('services.yaml');
-        $loader->load('listener.yaml');
+        // $loader->load('listener.yaml');
         $rootKey = $this->getAlias();
 
-        $container->setParameter($rootKey.'.foo.bar', $config['foo']['bar']);
+        $container->setParameter($rootKey . '.four_eyes_principle', $config['four_eyes_principle']);
+        $container->setParameter($rootKey . '.enabled_tables', $config['enabled_tables']);
     }
 }
