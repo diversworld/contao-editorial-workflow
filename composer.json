@@ -1,0 +1,56 @@
+{
+    "name": "diversworld/contao-editorial-workflow",
+    "description": "Contao Editorial Workflow  The Contao Editorial Workflow bundle adds a structured content approval process to Contao CMS.  Editors can create and modify content in a draft state, submit it for review, and track its approval status. Reviewers and publisher",
+    "keywords": [
+        "contao",
+        "bundle",
+        "tag 3",
+        "tag 4"
+    ],
+    "type": "contao-bundle",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Eckhard Becker",
+            "email": "info@diversworld.eu",
+            "homepage": "https://github.com/diversworld",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/diversworld/contao-editorial-workflow/issues",
+        "source": "https://github.com/diversworld/contao-editorial-workflow"
+    },
+    "require": {
+        "php": "^8.1",
+        "contao/core-bundle": "^5.3"
+    },
+    "require-dev": {
+        "contao/easy-coding-standard": "^6.13",
+        "contao/manager-plugin": "^2.12",
+        "contao/test-case": "^5.3",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Diversworld\\ContaoEditorialWorkflow\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": false,
+            "contao/manager-plugin": false,
+            "contao-community-alliance/composer-plugin": true,
+            "php-http/discovery": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "extra": {
+        "contao-manager-plugin": "Diversworld\\ContaoEditorialWorkflow\\ContaoManager\\Plugin"
+    },
+    "scripts": {
+        "unit-tests": "@php tools/phpunit/vendor/bin/phpunit -c tools/phpunit/phpunit.xml.dist",
+        "cs-fixer": "@php tools/ecs/vendor/bin/ecs check config/ contao/ src/ templates/ tests/ --config tools/ecs/config/default.php --fix --ansi"
+    },
+    "version": "0.0.1"
+}
