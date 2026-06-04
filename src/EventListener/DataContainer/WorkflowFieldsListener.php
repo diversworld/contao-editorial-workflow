@@ -23,13 +23,28 @@ class WorkflowFieldsListener
     {
         $user = $this->workflowManager->getBackendUser();
 
+        // Admins see everything
         if ($user && $user->isAdmin) {
             return;
         }
 
-        if (!$user || !$user->hasAccess($dc->table . '::workflow_status', 'alexf')) {
-            $GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_status']['eval']['doNotShow'] = true;
-            $GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_comment']['eval']['doNotShow'] = true;
+        // If not admin, check for workflow roles or alexf permission
+        if (isset($GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_status'])) {
+            $isReviewer = $this->workflowManager->hasWorkflowPermission('reviewer');
+            $isPublisher = $this->workflowManager->hasWorkflowPermission('publisher');
+
+            // If user has a workflow role, we force the fields to be visible (ignoring alexf)
+            if ($isReviewer || $isPublisher) {
+                $GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_status']['exclude'] = false;
+                $GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_comment']['exclude'] = false;
+                return;
+            }
+
+            // For others, if they don't have alexf permission, we hide it completely
+            if (!$user || !$user->hasAccess($dc->table . '::workflow_status', 'alexf')) {
+                $GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_status']['eval']['doNotShow'] = true;
+                $GLOBALS['TL_DCA'][$dc->table]['fields']['workflow_comment']['eval']['doNotShow'] = true;
+            }
         }
     }
 

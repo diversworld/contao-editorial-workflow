@@ -5,6 +5,7 @@ namespace Diversworld\ContaoEditorialWorkflow\Workflow;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\BackendUser;
+use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\SecurityBundle\Security;
 use Terminal42\NotificationCenterBundle\NotificationCenter;
@@ -18,7 +19,8 @@ class WorkflowManager
         private readonly NotificationCenter $notificationCenter,
         private readonly bool               $fourEyesPrinciple,
         private readonly array              $enabledTables
-    ) {
+    )
+    {
     }
 
     public function canChangeStatus(string $table, $id, string $newStatus): bool
@@ -77,7 +79,7 @@ class WorkflowManager
 
         $permissions = $user->editorial_workflow_permissions;
         if (!is_array($permissions)) {
-            $permissions = deserialize($permissions, true);
+            $permissions = StringUtil::deserialize($permissions, true);
         }
 
         return in_array($role, $permissions, true);
@@ -91,8 +93,12 @@ class WorkflowManager
 
     private function getCurrentStatus($table, $id): string
     {
-        $status = $this->db->fetchOne("SELECT workflow_status FROM $table WHERE id = ?", [$id]);
-        return $status ?: WorkflowStatus::STATUS_DRAFT;
+        try {
+            $status = $this->db->fetchOne("SELECT workflow_status FROM $table WHERE id = ?", [$id]);
+            return $status ?: WorkflowStatus::STATUS_DRAFT;
+        } catch (\Exception $e) {
+            return WorkflowStatus::STATUS_DRAFT;
+        }
     }
 
     private function isAuthor($table, $id, $userId): bool
@@ -108,16 +114,20 @@ class WorkflowManager
         $user = $this->getBackendUser();
         $userId = $user ? $user->id : 0;
 
-        $this->db->insert('tl_editorial_workflow_log', [
-            'tstamp' => time(),
-            'pid' => $id,
-            'ptable' => $table,
-            'user_id' => $userId,
-            'from_status' => $fromStatus,
-            'to_status' => $toStatus,
-            'comment' => $comment,
-            'version' => $version,
-        ]);
+        try {
+            $this->db->insert('tl_editorial_workflow_log', [
+                'tstamp' => time(),
+                'pid' => $id,
+                'ptable' => $table,
+                'user_id' => $userId,
+                'from_status' => $fromStatus,
+                'to_status' => $toStatus,
+                'comment' => $comment,
+                'version' => $version,
+            ]);
+        } catch (\Exception $e) {
+            // Log table might not exist
+        }
 
         $this->sendNotification($table, $id, $toStatus, $comment, $user);
     }
@@ -126,19 +136,23 @@ class WorkflowManager
     {
         $notificationId = 0;
         $tokens = [
-            'workflow_table'   => $table,
-            'workflow_id'      => $id,
-            'workflow_status'  => $status,
+            'workflow_table' => $table,
+            'workflow_id' => $id,
+            'workflow_status' => $status,
             'workflow_comment' => $comment,
-            'workflow_user'    => $user ? $user->username : 'System',
+            'workflow_user' => $user ? $user->username : 'System',
         ];
 
         // Fetch object details for more tokens if possible
-        $row = $this->db->fetchAssociative("SELECT * FROM $table WHERE id = ?", [$id]);
-        if ($row) {
-            foreach ($row as $key => $val) {
-                $tokens['workflow_data_' . $key] = $val;
+        try {
+            $row = $this->db->fetchAssociative("SELECT * FROM $table WHERE id = ?", [$id]);
+            if ($row) {
+                foreach ($row as $key => $val) {
+                    $tokens['workflow_data_' . $key] = $val;
+                }
             }
+        } catch (\Exception $e) {
+            // Table might not exist or column might be missing
         }
 
         // Determine which notification to send based on status

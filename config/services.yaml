@@ -16,7 +16,7 @@ services:
         tags:
             - { name: kernel.event_listener, event: terminal42_notification_center.get_token_definitions }
 
-      # Add a session bag
+        # Add a session bag
     diversworld.contao_editorial_workflow.session.factory:
         class: Diversworld\ContaoEditorialWorkflow\Session\SessionFactory
         decorates: session.factory

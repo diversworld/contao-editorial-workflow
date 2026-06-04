@@ -9,7 +9,7 @@ $GLOBALS['TL_DCA']['tl_news']['fields']['workflow_status'] = [
     'inputType' => 'select',
     'options'   => WorkflowStatus::getStatuses(),
     'reference' => &$GLOBALS['TL_LANG']['MSC']['workflow_status_ref'],
-    'eval'      => ['tl_class' => 'w50', 'includeBlankOption' => true, 'chosen' => true],
+    'eval' => ['tl_class' => 'w50', 'includeBlankOption' => true, 'chosen' => true, 'submitOnChange' => true],
     'sql'       => "varchar(32) NOT NULL default 'draft'",
 ];
 
@@ -17,17 +17,28 @@ $GLOBALS['TL_DCA']['tl_news']['fields']['workflow_comment'] = [
     'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_comment'],
     'exclude'   => true,
     'inputType' => 'textarea',
-    'eval'      => ['tl_class' => 'clr'],
+    'eval' => ['tl_class' => 'clr', 'rte' => 'tinyMCE'],
     'sql'       => "text NULL",
 ];
 
-foreach ($GLOBALS['TL_DCA']['tl_news']['palettes'] ?? [] as $name => $palette) {
-    if ($name === '__selector__' || !is_string($palette)) {
-        continue;
-    }
+if (isset($GLOBALS['TL_DCA']['tl_news']['palettes']) && is_array($GLOBALS['TL_DCA']['tl_news']['palettes'])) {
+    foreach ($GLOBALS['TL_DCA']['tl_news']['palettes'] as $name => $palette) {
+        if ($name === '__selector__' || !is_string($palette)) {
+            continue;
+        }
 
-    PaletteManipulator::create()
-        ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
-        ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND)
-        ->applyToPalette($name, 'tl_news');
+        $pm = PaletteManipulator::create()
+            ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
+
+        if (str_contains($palette, 'publish_legend')) {
+            $pm->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE);
+        } elseif (str_contains($palette, 'invisible_legend')) {
+            $pm->addLegend('workflow_legend', 'invisible_legend', PaletteManipulator::POSITION_BEFORE);
+        } else {
+            $GLOBALS['TL_DCA']['tl_news']['palettes'][$name] .= ';{workflow_legend},workflow_status,workflow_comment';
+            continue;
+        }
+
+        $pm->applyToPalette($name, 'tl_news');
+    }
 }
