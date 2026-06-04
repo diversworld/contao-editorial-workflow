@@ -12,6 +12,10 @@ services:
         resource: ../src/
         exclude: ../src/{DependencyInjection,Model,Session}
 
+    Diversworld\ContaoEditorialWorkflow\EventListener\NotificationCenter\NotificationTypeListener:
+        tags:
+            - { name: kernel.event_listener, event: terminal42_notification_center.get_token_definitions }
+
       # Add a session bag
     diversworld.contao_editorial_workflow.session.factory:
         class: Diversworld\ContaoEditorialWorkflow\Session\SessionFactory

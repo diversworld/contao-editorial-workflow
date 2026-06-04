@@ -1,34 +1,49 @@
 <?php
+declare(strict_types=1);
 
 namespace Diversworld\ContaoEditorialWorkflow\EventListener;
 
-use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
-use Contao\DataContainer;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 
 class DashboardListener
 {
-    private $db;
-    private $requestStack;
-
-    public function __construct(\Doctrine\DBAL\Connection $db, RequestStack $requestStack)
-    {
-        $this->db = $db;
-        $this->requestStack = $requestStack;
+    public function __construct(
+        private readonly Connection $db,
+        private readonly RequestStack $requestStack,
+        private readonly WorkflowManager $workflowManager,
+        private readonly array $enabledTables
+    ) {
     }
 
-    public function onGetDashboard()
+    public function onGetDashboard(): array
     {
-        // Hier könnte ein Custom-Dashboard-Widget für Contao 5 implementiert werden
-        // Aktuell generieren wir eine Übersicht der ausstehenden Prüfungen
+        $user = $this->workflowManager->getBackendUser();
+        if (!$user) {
+            return [];
+        }
 
-        $pending = $this->db->fetchAllAssociative("
-            SELECT id, workflow_status, 'tl_news' as ptable FROM tl_news WHERE workflow_status = 'review'
-            UNION
-            SELECT id, workflow_status, 'tl_page' as ptable FROM tl_page WHERE workflow_status = 'review'
-            -- Weitere Tabellen...
-        ");
+        $isReviewer = $this->workflowManager->hasWorkflowPermission('reviewer');
+        if (!$isReviewer && !$user->isAdmin) {
+            return [];
+        }
+
+        $queries = [];
+        foreach ($this->enabledTables as $table) {
+            // Check if user has access to this table in general
+            if (!$user->isAdmin && !$user->hasAccess($table, 'tables')) {
+                continue;
+            }
+            $queries[] = "SELECT id, workflow_status, '$table' as ptable FROM $table WHERE workflow_status = 'review'";
+        }
+
+        if (empty($queries)) {
+            return [];
+        }
+
+        $sql = implode(' UNION ', $queries);
+        $pending = $this->db->fetchAllAssociative($sql);
 
         return $pending;
     }
