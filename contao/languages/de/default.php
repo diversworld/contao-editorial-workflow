@@ -44,3 +44,9 @@ $GLOBALS['TL_LANG']['tl_user']['editorial_workflow_permissions_ref'] = [
     'reviewer' => 'Prüfer (darf freigeben/ablehnen)',
     'publisher' => 'Publisher (darf veröffentlichen)',
 ];
+
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow'] = 'Editorial Workflow';
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_review'] = ['In Prüfung', 'Wird versendet, wenn ein Inhalt zur Prüfung eingereicht wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_approved'] = ['Freigabe erteilt', 'Wird versendet, wenn ein Inhalt freigegeben wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_rejected'] = ['Freigabe abgelehnt', 'Wird versendet, wenn ein Inhalt abgelehnt wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_published'] = ['Veröffentlichung erfolgt', 'Wird versendet, wenn ein Inhalt veröffentlicht wurde.'];

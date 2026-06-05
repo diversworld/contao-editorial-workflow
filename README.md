@@ -47,31 +47,87 @@ Das Modul integriert sich generisch in folgende Contao-Tabellen:
    ```
 2. Contao Installtool aufrufen oder Datenbank via Manager aktualisieren.
 
-## Konfiguration
+## Aktivierung und Nutzung
 
-### Workflow-Einstellungen (config/config.yaml)
+Um das Modul erfolgreich zu nutzen, sind folgende Schritte erforderlich:
 
-Das Verhalten des Workflows kann über die Symfony-Konfiguration angepasst werden:
+### 1. Installation und Datenbank-Update
+
+Nach der Installation via Composer müssen die Datenbankfelder angelegt werden. Dies kann über das **Contao Installtool**
+oder den **Contao Manager** erfolgen. Es werden Felder in den Tabellen der unterstützten Inhaltstypen sowie die neue
+Tabelle `tl_editorial_workflow_log` für die Historie erstellt.
+
+### 2. Konfiguration (Optional)
+
+Standardmäßig ist das Modul für alle unterstützten Tabellen aktiv und das Vier-Augen-Prinzip ist eingeschaltet. Falls
+gewünscht, kann dies in der `config/config.yaml` angepasst werden:
 
 ```yaml
+# config/config.yaml
 diversworld_contao_editorial_workflow:
-  four_eyes_principle: true  # Autoren dürfen ihre eigenen Inhalte nicht freigeben
-  enabled_tables: # Tabellen, für die der Workflow aktiv ist
+  four_eyes_principle: true  # Autoren dürfen eigene Änderungen nicht selbst freigeben
+  enabled_tables: # Nur für diese Tabellen aktivieren
     - tl_page
     - tl_article
     - tl_news
 ```
 
-### Berechtigungen im Backend
+### 3. Rollen und Berechtigungen vergeben
 
-Nach der Installation stehen in den **Benutzergruppen** und **Benutzern** neue Felder unter "Workflow-Berechtigungen"
-zur Verfügung:
+Die Steuerung des Workflows erfolgt über das Contao-Berechtigungssystem. Editieren Sie eine **Benutzergruppe** oder
+einen **Benutzer** und vergeben Sie folgende Berechtigungen:
 
-1. **Prüfer (Reviewer)**: Darf Inhalte auf "Freigegeben" oder "Abgelehnt" setzen.
-2. **Publisher**: Darf Inhalte auf "Veröffentlicht" setzen.
+1. **Erlaubte Felder**: Aktivieren Sie unter "Erlaubte Felder" für jede genutzte Tabelle (z.B. `tl_news`, `tl_page`) die
+   Felder `workflow_status` und `workflow_comment`.
+   *Hinweis: Benutzer mit den Rollen "Prüfer" oder "Publisher" sehen die Felder automatisch, auch wenn diese nicht
+   explizit freigeschaltet wurden.*
+2. **Workflow-Berechtigungen**: Wählen Sie die entsprechenden Rollen aus:
+   * **Prüfer (Reviewer)**: Darf Inhalte auf "Freigegeben" oder "Abgelehnt" setzen.
+   * **Publisher**: Darf Inhalte auf "Veröffentlicht" setzen.
 
-Ohne diese Berechtigungen können Redakteure Inhalte lediglich als "Entwurf" speichern oder "In Prüfung" geben.
+Redakteure ohne diese Rollen können Inhalte erstellen, bearbeiten und den Status auf "In Prüfung" setzen, sofern sie
+Zugriff auf die Felder haben.
+
+### 4. Wichtige Hinweise zur Fehlerbehebung
+
+Sollte es im Backend zu einer Fehlermeldung kommen (z.B. `Unknown column 'workflow_status'`), stellen Sie sicher, dass
+Sie das **Contao Installtool** ausgeführt haben. Das Modul fängt diese Fehler zwar im Dashboard ab, aber für die volle
+Funktionalität müssen die Spalten in der Datenbank vorhanden sein.
+
+### 5. Benachrichtigungen (Notification Center)
+
+Das Modul integriert sich vollständig in
+das [Notification Center](https://github.com/terminal42/contao-notification-center).
+
+1. **Benachrichtigungstyp**: Erstellen Sie im Backend eine neue Benachrichtigung. Wählen Sie als Typ einen der unter "
+   Editorial Workflow" gelisteten Typen (z.B. "In Prüfung").
+2. **Tokens**: In den Nachrichtentexten können Sie folgende Tokens verwenden:
+   * `##workflow_table##`: Die betroffene Tabelle (z.B. `tl_news`).
+   * `##workflow_id##`: Die ID des Datensatzes.
+   * `##workflow_status##`: Der neue Status.
+   * `##workflow_comment##`: Der hinterlegte Kommentar.
+   * `##workflow_user##`: Der Benutzer, der die Änderung vorgenommen hat.
+   * `##workflow_data_*##`: Alle Felder des betroffenen Datensatzes (z.B. `##workflow_data_headline##`).
+3. **Versand**: Sobald ein Redakteur oder Prüfer den Status ändert, werden alle für diesen Typ konfigurierten
+   Benachrichtigungen automatisch versendet.
+
+### 6. Workflow im Redaktionsalltag
+
+1. **Erstellung/Bearbeitung**: Ein Redakteur bearbeitet einen Inhalt (z.B. eine Nachricht). Er speichert diesen zunächst
+   als "Entwurf".
+2. **Prüfung anfordern**: Sobald die Bearbeitung abgeschlossen ist, setzt der Redakteur den Status auf **"In Prüfung"**.
+   Optional kann ein Kommentar für den Prüfer hinterlassen werden.
+3. **Freigabe durch Prüfer**: Ein Benutzer mit der Rolle **Prüfer** sieht den Inhalt (z.B. über das Dashboard oder in
+   der Listenansicht) und kann ihn nach Sichtung auf **"Freigegeben"** oder **"Abgelehnt"** setzen. Bei einer Ablehnung
+   sollte ein Grund im Kommentarfeld angegeben werden.
+4. **Veröffentlichung**: Ein Benutzer mit der Rolle **Publisher** kann freigegebene Inhalte auf **"Veröffentlicht"**
+   setzen. Erst in diesem Status (und wenn das Contao-Feld "Veröffentlichen" aktiv ist) wird der Inhalt im Frontend
+   sichtbar.
+
+### 7. Historie einsehen
+
+Jede Statusänderung wird revisionssicher protokolliert. In der Listenansicht der jeweiligen Module (z.B.
+Nachrichten-Liste) kann über das Info-Icon des Datensatzes die Historie der Workflow-Änderungen eingesehen werden.
 
 ## Lizenz
-
 LGPL-3.0-or-later
