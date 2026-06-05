@@ -131,3 +131,11 @@ Nachrichten-Liste) kann über das Info-Icon des Datensatzes die Historie der Wor
 
 ## Lizenz
 LGPL-3.0-or-later
+
+## Donation
+
+If you like this extension and think it's worth a little donation: You can support me via Paypal.Me:
+
+[Donation for Diversworld EditorialWorkflow](https://paypal.me/EckhardBecker615)
+
+Thank You!
