@@ -4,7 +4,6 @@ use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
 
-
 $GLOBALS['TL_DCA']['tl_calendar_events']['fields']['workflow_status'] = [
     'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_status'],
     'exclude'   => true,

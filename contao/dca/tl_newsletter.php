@@ -4,22 +4,21 @@ use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
 
-
 $GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_status'] = [
-    'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_status'],
-    'exclude'   => true,
+    'label' => &$GLOBALS['TL_LANG']['MSC']['workflow_status'],
+    'exclude' => true,
     'inputType' => 'select',
     'reference' => &$GLOBALS['TL_LANG']['MSC']['workflow_status_ref'],
-    'eval'      => ['tl_class' => 'w50', 'includeBlankOption' => true, 'chosen' => true],
-    'sql'       => "varchar(32) NOT NULL default 'draft'",
+    'eval' => ['tl_class' => 'w50', 'includeBlankOption' => true, 'chosen' => true],
+    'sql' => "varchar(32) NOT NULL default 'draft'",
 ];
 
 $GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_comment'] = [
-    'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_comment'],
-    'exclude'   => true,
+    'label' => &$GLOBALS['TL_LANG']['MSC']['workflow_comment'],
+    'exclude' => true,
     'inputType' => 'textarea',
-    'eval'      => ['tl_class' => 'clr'],
-    'sql'       => "text NULL",
+    'eval' => ['tl_class' => 'clr'],
+    'sql' => "text NULL",
 ];
 
 $manipulator = PaletteManipulator::create()

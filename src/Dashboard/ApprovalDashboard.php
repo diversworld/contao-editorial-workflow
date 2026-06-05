@@ -17,10 +17,11 @@ class ApprovalDashboard
 {
     public function __construct(
         private readonly WorkflowManager $workflowManager,
-        private readonly RequestStack $requestStack,
+        private readonly RequestStack    $requestStack,
         private readonly RouterInterface $router,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
-    ) {
+    )
+    {
     }
 
     public function handleApprovalRequest(): void
@@ -31,9 +32,9 @@ class ApprovalDashboard
             return;
         }
 
-        $table = (string) $request->request->get('workflow_table');
-        $id = (int) $request->request->get('workflow_id');
-        $token = (string) $request->request->get('REQUEST_TOKEN');
+        $table = (string)$request->request->get('workflow_table');
+        $id = (int)$request->request->get('workflow_id');
+        $token = (string)$request->request->get('REQUEST_TOKEN');
 
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken('contao_csrf_token', $token))) {
             Message::addError($this->getLabel('invalidToken') ?: 'Invalid CSRF token.');

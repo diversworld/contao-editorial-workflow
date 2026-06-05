@@ -29,7 +29,7 @@ $GLOBALS['TL_DCA']['tl_user']['fields']['editorial_workflow_notifications'] = [
         $options = [];
 
         foreach ($notifications as $notification) {
-            $options[(int) $notification['id']] = $notification['title'];
+            $options[(int)$notification['id']] = $notification['title'];
         }
 
         return $options;

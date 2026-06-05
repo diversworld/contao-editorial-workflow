@@ -23,13 +23,13 @@ class WorkflowManager
     private array $tableColumns = [];
 
     public function __construct(
-        ContaoFramework     $framework,
-        Connection          $db,
-        Security            $security,
+        ContaoFramework $framework,
+        Connection      $db,
+        Security        $security,
         NotificationCenter $notificationCenter,
-        RequestStack        $requestStack,
-        bool                $fourEyesPrinciple,
-        array               $enabledTables
+        RequestStack    $requestStack,
+        bool            $fourEyesPrinciple,
+        array           $enabledTables
     )
     {
         $this->framework = $framework;
@@ -138,21 +138,21 @@ class WorkflowManager
             );
 
             foreach ($rows as $row) {
-                if (!$this->canChangeStatus($table, (int) $row['id'], WorkflowStatus::STATUS_APPROVED)) {
+                if (!$this->canChangeStatus($table, (int)$row['id'], WorkflowStatus::STATUS_APPROVED)) {
                     continue;
                 }
 
                 $records[] = [
                     'table' => $table,
-                    'id' => (int) $row['id'],
-                    'status' => (string) $row['workflow_status'],
-                    'title' => trim((string) ($row['record_title'] ?? '')) ?: sprintf('%s #%d', $table, $row['id']),
-                    'tstamp' => (int) ($row['record_tstamp'] ?? 0),
+                    'id' => (int)$row['id'],
+                    'status' => (string)$row['workflow_status'],
+                    'title' => trim((string)($row['record_title'] ?? '')) ?: sprintf('%s #%d', $table, $row['id']),
+                    'tstamp' => (int)($row['record_tstamp'] ?? 0),
                 ];
             }
         }
 
-        usort($records, static fn (array $a, array $b): int => [$b['tstamp'], $b['id']] <=> [$a['tstamp'], $a['id']]);
+        usort($records, static fn(array $a, array $b): int => [$b['tstamp'], $b['id']] <=> [$a['tstamp'], $a['id']]);
 
         return array_slice($records, 0, $limit);
     }
