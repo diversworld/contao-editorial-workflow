@@ -22,4 +22,9 @@ class WorkflowStatus
             self::STATUS_ARCHIVED,
         ];
     }
+
+    public static function getLabel(string $status): string
+    {
+        return $status;
+    }
 }

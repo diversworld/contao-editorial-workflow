@@ -14,15 +14,23 @@ declare(strict_types=1);
 
 namespace Diversworld\ContaoEditorialWorkflow\ContaoManager;
 
-use Diversworld\ContaoEditorialWorkflow\DiversworldContaoEditorialWorkflow;
+use Contao\CalendarBundle\ContaoCalendarBundle;
+use Contao\ContentArticle;
 use Contao\CoreBundle\ContaoCoreBundle;
+use Contao\FaqBundle\ContaoFaqBundle;
+use Contao\NewsBundle\ContaoNewsBundle;
+use Contao\NewsletterBundle\ContaoNewsletterBundle;
+use Diversworld\ContaoEditorialWorkflow\DiversworldContaoEditorialWorkflow;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
 use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
+use Contao\ManagerPlugin\Config\ConfigPluginInterface;
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\RouteCollection;
+use Terminal42\NotificationCenterBundle\Terminal42NotificationCenterBundle;
 
 class Plugin implements BundlePluginInterface, RoutingPluginInterface
 {
@@ -30,18 +38,23 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface
     {
         return [
             BundleConfig::create(DiversworldContaoEditorialWorkflow::class)
-                ->setLoadAfter([ContaoCoreBundle::class]),
+                ->setLoadAfter([
+                    ContaoCoreBundle::class,
+                    ContaoNewsBundle::class,
+                    ContaoCalendarBundle::class,
+                    ContaoFaqBundle::class,
+                    ContaoNewsletterBundle::class,
+                    Terminal42NotificationCenterBundle::class,
+                ]),
         ];
     }
 
-    /**
-     * @return RouteCollection|null
-     */
-    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
+    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel): ?RouteCollection
     {
         return $resolver
             ->resolve(__DIR__.'/../Controller')
             ->load(__DIR__.'/../Controller')
         ;
     }
+
 }

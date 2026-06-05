@@ -4,7 +4,8 @@ use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
 
-$GLOBALS['TL_DCA']['tl_news']['fields']['workflow_status'] = [
+
+$GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_status'] = [
     'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_status'],
     'exclude'   => true,
     'inputType' => 'select',
@@ -13,7 +14,7 @@ $GLOBALS['TL_DCA']['tl_news']['fields']['workflow_status'] = [
     'sql'       => "varchar(32) NOT NULL default 'draft'",
 ];
 
-$GLOBALS['TL_DCA']['tl_news']['fields']['workflow_comment'] = [
+$GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_comment'] = [
     'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_comment'],
     'exclude'   => true,
     'inputType' => 'textarea',
@@ -22,10 +23,11 @@ $GLOBALS['TL_DCA']['tl_news']['fields']['workflow_comment'] = [
 ];
 
 $manipulator = PaletteManipulator::create()
-    ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
+    ->addLegend('workflow_legend', 'title_legend', PaletteManipulator::POSITION_AFTER)
     ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
 
-foreach ($GLOBALS['TL_DCA']['tl_news']['palettes'] as $name => $palette) {
+foreach ($GLOBALS['TL_DCA']['tl_newsletter']['palettes'] as $name => $palette) {
     if ($name === '__selector__') continue;
-    $manipulator->applyToPalette($name, 'tl_news');
+    $manipulator->applyToPalette($name, 'tl_newsletter');
 }
+

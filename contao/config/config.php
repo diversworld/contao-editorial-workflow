@@ -10,3 +10,12 @@
  * @link https://github.com/diversworld/contao-editorial-workflow
  */
 
+use Diversworld\ContaoEditorialWorkflow\Backend\WorkflowApprovalsModule;
+use Diversworld\ContaoEditorialWorkflow\EventListener\DashboardListener;
+
+$GLOBALS['BE_MOD']['system']['editorial_workflow_approvals'] = [
+    'callback' => WorkflowApprovalsModule::class,
+    'disablePermissionChecks' => true,
+];
+
+$GLOBALS['TL_HOOKS']['parseBackendTemplate'][] = [DashboardListener::class, 'onParseBackendTemplate'];

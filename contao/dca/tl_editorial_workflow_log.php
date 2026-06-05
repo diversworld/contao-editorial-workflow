@@ -1,7 +1,6 @@
 <?php
 
 use Contao\DC_Table;
-use Contao\DataContainer;
 
 $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
     'config' => [
@@ -42,6 +41,9 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
         ],
         'version' => [
             'sql' => "int(10) unsigned NOT NULL default 0",
+        ],
+        'ip' => [
+            'sql' => "varchar(45) NOT NULL default ''",
         ],
     ],
 ];

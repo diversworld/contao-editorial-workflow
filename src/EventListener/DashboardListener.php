@@ -2,34 +2,29 @@
 
 namespace Diversworld\ContaoEditorialWorkflow\EventListener;
 
-use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
-use Contao\DataContainer;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
+use Diversworld\ContaoEditorialWorkflow\Dashboard\ApprovalDashboard;
 
 class DashboardListener
 {
-    private $db;
-    private $requestStack;
-
-    public function __construct(\Doctrine\DBAL\Connection $db, RequestStack $requestStack)
+    public function __construct(private readonly ApprovalDashboard $approvalDashboard)
     {
-        $this->db = $db;
-        $this->requestStack = $requestStack;
     }
 
-    public function onGetDashboard()
+    #[AsHook('parse_backend_template')]
+    public function onParseBackendTemplate(string $buffer, string $template): string
     {
-        // Hier könnte ein Custom-Dashboard-Widget für Contao 5 implementiert werden
-        // Aktuell generieren wir eine Übersicht der ausstehenden Prüfungen
+        if ($template !== 'be_welcome') {
+            return $buffer;
+        }
 
-        $pending = $this->db->fetchAllAssociative("
-            SELECT id, workflow_status, 'tl_news' as ptable FROM tl_news WHERE workflow_status = 'review'
-            UNION
-            SELECT id, workflow_status, 'tl_page' as ptable FROM tl_page WHERE workflow_status = 'review'
-            -- Weitere Tabellen...
-        ");
+        $this->approvalDashboard->handleApprovalRequest();
+        $html = $this->approvalDashboard->render(true);
 
-        return $pending;
+        if ($html === '') {
+            return $buffer;
+        }
+
+        return preg_replace('~</div>\s*$~', $html . '</div>', $buffer, 1) ?: $buffer . $html;
     }
 }
