@@ -14,6 +14,21 @@ class WorkflowFieldsListener
     public function __construct(WorkflowManager $workflowManager)
     {
         $this->workflowManager = $workflowManager;
+
+        // Ensure tl_newsletter is enabled (since it might be missing in Configuration.php)
+        try {
+            $reflection = new \ReflectionClass($workflowManager);
+            $property = $reflection->getProperty('enabledTables');
+            $property->setAccessible(true);
+            $enabledTables = $property->getValue($workflowManager);
+
+            if (is_array($enabledTables) && !in_array('tl_newsletter', $enabledTables, true)) {
+                $enabledTables[] = 'tl_newsletter';
+                $property->setValue($workflowManager, $enabledTables);
+            }
+        } catch (\Exception $e) {
+            // Fallback if reflection fails
+        }
     }
 
     #[AsCallback(table: 'tl_page', target: 'fields.workflow_status.save')]
@@ -73,5 +88,26 @@ class WorkflowFieldsListener
         $options[] = WorkflowStatus::STATUS_ARCHIVED;
 
         return array_unique($options);
+    }
+
+    #[AsCallback(table: 'tl_newsletter', target: 'list.label.label')]
+    public function onLabel($row, $label, DataContainer $dc, $args): array|string
+    {
+        if (class_exists('tl_newsletter')) {
+            $newsletter = new \tl_newsletter();
+            if (method_exists($newsletter, 'listNewsletters')) {
+                $labels = $newsletter->listNewsletters($row);
+
+                $status = $row['workflow_status'] ?? WorkflowStatus::STATUS_DRAFT;
+                if ($status !== WorkflowStatus::STATUS_PUBLISHED) {
+                    $statusLabel = $GLOBALS['TL_LANG']['MSC']['workflow_status_ref'][$status] ?? $status;
+                    $labels[0] .= sprintf(' <span style="color:#999;padding-left:3px">[%s]</span>', $statusLabel);
+                }
+
+                return $labels;
+            }
+        }
+
+        return $label;
     }
 }

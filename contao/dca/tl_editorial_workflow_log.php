@@ -14,36 +14,89 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
             ],
         ],
     ],
+    'list' => [
+        'sorting' => [
+            'mode' => 2,
+            'fields' => ['tstamp DESC'],
+            'flag' => 6,
+            'panelLayout' => 'filter;search,limit',
+        ],
+        'label' => [
+            'fields' => ['tstamp', 'user_id', 'ptable', 'from_status', 'to_status'],
+            'showColumns' => true,
+        ],
+        'global_operations' => [
+            'all' => [
+                'label' => &$GLOBALS['TL_LANG']['MSC']['all'],
+                'href' => 'act=select',
+                'class' => 'header_edit_all',
+                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
+            ],
+        ],
+        'operations' => [
+            'show' => [
+                'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['show'],
+                'href' => 'act=show',
+                'icon' => 'show.svg',
+            ],
+        ],
+    ],
+    'palettes' => [
+        'default' => '{log_legend},tstamp,user_id,ip;{target_legend},ptable,pid,version;{workflow_legend},from_status,to_status,comment',
+    ],
     'fields' => [
         'id' => [
             'sql' => "int(10) unsigned NOT NULL auto_increment",
         ],
         'tstamp' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['tstamp'],
+            'eval' => ['rgxp' => 'dateline'],
             'sql' => "int(10) unsigned NOT NULL default 0",
         ],
         'pid' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['pid'],
             'sql' => "int(10) unsigned NOT NULL default 0",
         ],
         'ptable' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['ptable'],
+            'filter' => true,
             'sql' => "varchar(64) NOT NULL default ''",
         ],
         'user_id' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['user_id'],
+            'filter' => true,
+            'foreignKey' => 'tl_user.username',
             'sql' => "int(10) unsigned NOT NULL default 0",
         ],
         'from_status' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['from_status'],
+            'filter' => true,
             'sql' => "varchar(32) NOT NULL default ''",
         ],
         'to_status' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['to_status'],
+            'filter' => true,
             'sql' => "varchar(32) NOT NULL default ''",
         ],
         'comment' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['comment'],
+            'search' => true,
             'sql' => "text NULL",
         ],
         'version' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['version'],
             'sql' => "int(10) unsigned NOT NULL default 0",
         ],
         'ip' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['ip'],
             'sql' => "varchar(45) NOT NULL default ''",
         ],
     ],
+];
+
+/**
+ * Register the backend module
+ */
+$GLOBALS['BE_MOD']['system']['editorial_workflow_log'] = [
+    'table' => 'tl_editorial_workflow_log',
 ];

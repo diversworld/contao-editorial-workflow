@@ -43,5 +43,11 @@ services:
         arguments:
             $csrfTokenManager: '@contao.csrf.token_manager'
 
+    Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager:
+        public: true
+
+    Diversworld\ContaoEditorialWorkflow\Backend\WorkflowApprovalsModule:
+        public: true
+
     Diversworld\ContaoEditorialWorkflow\EventListener\DashboardListener:
         public: true

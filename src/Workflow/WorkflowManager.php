@@ -84,6 +84,13 @@ class WorkflowManager
         return $user instanceof BackendUser && ($user->isAdmin || $this->hasWorkflowPermission('reviewer'));
     }
 
+    public function canPublish(): bool
+    {
+        $user = $this->security->getUser();
+
+        return $user instanceof BackendUser && ($user->isAdmin || $this->hasWorkflowPermission('publisher'));
+    }
+
     public function changeStatus(string $table, int $id, string $newStatus, string $comment = ''): bool
     {
         if (!$this->isEnabledWorkflowTable($table) || !$this->canChangeStatus($table, $id, $newStatus)) {
@@ -157,7 +164,7 @@ class WorkflowManager
         return array_slice($records, 0, $limit);
     }
 
-    private function hasWorkflowPermission(string $role): bool
+    public function hasWorkflowPermission(string $role): bool
     {
         $user = $this->security->getUser();
         if (!$user instanceof BackendUser) {

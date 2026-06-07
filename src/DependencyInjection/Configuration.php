@@ -32,7 +32,7 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->arrayNode('enabled_tables')
             ->scalarPrototype()->end()
-            ->defaultValue(['tl_page', 'tl_article', 'tl_content', 'tl_news', 'tl_calendar_events', 'tl_faq'])
+            ->defaultValue(['tl_page', 'tl_article', 'tl_content', 'tl_news', 'tl_calendar_events', 'tl_faq', 'tl_newsletter'])
             ->end()
             ->end()
         ;

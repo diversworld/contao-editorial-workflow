@@ -21,6 +21,9 @@ $GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_comment'] = [
     'sql' => "text NULL",
 ];
 
+$GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback'] = [\Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener::class, 'onLabel'];
+$GLOBALS['TL_DCA']['tl_newsletter']['list']['operations']['send']['button_callback'] = [\Diversworld\ContaoEditorialWorkflow\Backend\WorkflowApprovalsModule::class, 'checkSendPermission'];
+
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'title_legend', PaletteManipulator::POSITION_AFTER)
     ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
