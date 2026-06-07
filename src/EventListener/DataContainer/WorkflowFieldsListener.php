@@ -19,7 +19,6 @@ class WorkflowFieldsListener
         try {
             $reflection = new \ReflectionClass($workflowManager);
             $property = $reflection->getProperty('enabledTables');
-            $property->setAccessible(true);
             $enabledTables = $property->getValue($workflowManager);
 
             if (is_array($enabledTables) && !in_array('tl_newsletter', $enabledTables, true)) {

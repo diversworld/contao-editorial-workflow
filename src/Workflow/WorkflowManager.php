@@ -326,7 +326,7 @@ class WorkflowManager
                 }
 
                 // Autor finden (Ersteller der ersten Version)
-                $authorId = $this->db->fetchOne("SELECT userid FROM tl_version WHERE fromTable = ? AND pid = ? ORDER BY version ASC LIMIT 1", [$table, $id]);
+                $authorId = $this->db->fetchOne("SELECT userid FROM tl_version WHERE fromTable = ? AND pid = ? ORDER BY version LIMIT 1", [$table, $id]);
                 if ($authorId) {
                     $tokens['author_name'] = $this->db->fetchOne("SELECT name FROM tl_user WHERE id = ?", [$authorId]) ?: '';
                 }

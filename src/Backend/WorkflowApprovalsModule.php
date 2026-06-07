@@ -26,7 +26,7 @@ class WorkflowApprovalsModule extends BackendModule
         $workflowManager = System::getContainer()->get(WorkflowManager::class);
 
         if ($workflowManager->canPublish()) {
-            return sprintf('<a href="%s" title="%s"%s>%s</a>', \Contao\Backend::addToUrl($href . '&amp;id=' . $row['id']), $title, $attributes, \Contao\Image::getHtml($icon, $label));
+            return sprintf('<a href="%s" title="%s" %s>%s</a>', \Contao\Backend::addToUrl($href . '&amp;id=' . $row['id']), $title, $attributes, \Contao\Image::getHtml($icon, $label));
         }
 
         return '';
