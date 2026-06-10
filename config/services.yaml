@@ -66,7 +66,7 @@ services:
             - _diversworld_contao_editorial_workflow_attributes
         calls:
             - [ setName, [ diversworld_contao_editorial_workflow ] ]
-
+    # Approval Dashboard
     Diversworld\ContaoEditorialWorkflow\Dashboard\ApprovalDashboard:
         public: true
 
