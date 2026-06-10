@@ -22,7 +22,7 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
             'panelLayout' => 'filter;search,limit',
         ],
         'label' => [
-            'fields' => ['tstamp', 'user_id', 'ptable', 'from_status', 'to_status'],
+            'fields' => ['tstamp', 'user_id', 'ptable'],
             'showColumns' => true,
         ],
         'global_operations' => [
