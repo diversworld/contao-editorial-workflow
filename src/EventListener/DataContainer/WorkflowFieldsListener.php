@@ -4,6 +4,7 @@ namespace Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
+use Contao\Date;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
@@ -89,24 +90,119 @@ class WorkflowFieldsListener
         return array_unique($options);
     }
 
+    #[AsCallback(table: 'tl_page', target: 'list.label.label')]
+    #[AsCallback(table: 'tl_news', target: 'list.label.label')]
+    #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label')]
+    #[AsCallback(table: 'tl_faq', target: 'list.label.label')]
     #[AsCallback(table: 'tl_newsletter', target: 'list.label.label')]
     public function onLabel($row, $label, DataContainer $dc, $args): array|string
     {
-        if (class_exists('tl_newsletter')) {
+        // Newsletter hat eine spezielle Logik, um das Original-Label zu generieren
+        if ($dc->table === 'tl_newsletter' && class_exists('tl_newsletter')) {
             $newsletter = new \tl_newsletter();
             if (method_exists($newsletter, 'listNewsletters')) {
-                $labels = $newsletter->listNewsletters($row);
-
-                $status = $row['workflow_status'] ?? WorkflowStatus::STATUS_DRAFT;
-                if ($status !== WorkflowStatus::STATUS_PUBLISHED) {
-                    $statusLabel = $GLOBALS['TL_LANG']['MSC']['workflow_status_ref'][$status] ?? $status;
-                    $labels[0] .= sprintf(' <span style="color:#999;padding-left:3px">[%s]</span>', $statusLabel);
-                }
-
-                return $labels;
+                $label = $newsletter->listNewsletters($row);
             }
         }
 
+        // News hat eine spezielle Logik
+        if ($dc->table === 'tl_news') {
+            if (class_exists('tl_news')) {
+                $news = new \tl_news();
+                if (method_exists($news, 'addNews')) {
+                    $label = $news->addNews($row, $label, $dc, $args);
+                }
+            }
+
+            // Fallback für Contao 5+, falls tl_news nicht existiert oder addNews fehlschlägt
+            if ($label === '' || $label === $row['headline']) {
+                $date = Date::parse(\Contao\Config::get('datimFormat'), $row['date']);
+                $label = sprintf('%s <span class="label-info">[%s]</span>', $row['headline'], $date);
+            }
+        }
+
+        // Kalender hat eine spezielle Logik
+        if ($dc->table === 'tl_calendar_events' && class_exists('tl_calendar_events')) {
+            $events = new \tl_calendar_events();
+            if (method_exists($events, 'listEvents')) {
+                $label = $events->listEvents($row, $label, $dc, $args);
+            }
+        }
+
+        // FAQ hat eine spezielle Logik
+        if ($dc->table === 'tl_faq' && class_exists('tl_faq')) {
+            $faq = new \tl_faq();
+            if (method_exists($faq, 'listQuestions')) {
+                $label = $faq->listQuestions($row, $label, $dc, $args);
+            }
+        }
+
+        return $this->appendStatusToLabel($label, $row);
+    }
+
+    #[AsCallback(table: 'tl_article', target: 'list.sorting.child_record')]
+    public function onArticleChildRecord($row): string
+    {
+        return $this->handleChildRecord($row, 'tl_article');
+    }
+
+    #[AsCallback(table: 'tl_content', target: 'list.sorting.child_record')]
+    public function onContentChildRecord($row): string
+    {
+        return $this->handleChildRecord($row, 'tl_content');
+    }
+
+    private function handleChildRecord($row, $table): string
+    {
+        $label = '';
+
+        if (isset($GLOBALS['TL_DCA'][$table]['list']['sorting']['child_record_callback_orig'])) {
+            $callback = $GLOBALS['TL_DCA'][$table]['list']['sorting']['child_record_callback_orig'];
+            $label = $this->executeCallback($callback, [$row]);
+        }
+
+        // Fallback wenn kein Callback da ist
+        if (empty($label)) {
+            $label = $row['title'] ?? $row['headline'] ?? ($row['text'] ? substr(strip_tags($row['text']), 0, 50) : 'ID ' . $row['id']);
+        }
+
+        return $this->appendStatusToLabel($label, $row);
+    }
+
+    private function appendStatusToLabel($label, array $row): string|array
+    {
+        $status = $row['workflow_status'] ?? WorkflowStatus::STATUS_DRAFT;
+
+        if ($status === WorkflowStatus::STATUS_PUBLISHED) {
+            return $label;
+        }
+
+        $statusLabel = $GLOBALS['TL_LANG']['MSC']['workflow_status_ref'][$status] ?? $status;
+        $statusHtml = sprintf(' <span style="color:#999;padding-left:3px">[%s]</span>', $statusLabel);
+
+        if (is_array($label)) {
+            $label[0] .= $statusHtml;
+        } else {
+            $label .= $statusHtml;
+        }
+
         return $label;
+    }
+
+    private function executeCallback($callback, array $args): string
+    {
+        if (is_array($callback)) {
+            if (is_string($callback[0])) {
+                $instance = new $callback[0]();
+                return call_user_func_array([$instance, $callback[1]], $args);
+            }
+            return call_user_func_array([$callback[0], $callback[1]], $args);
+        }
+
+        if (is_callable($callback)) {
+            return call_user_func_array($callback, $args);
+        }
+
+        return '';
     }
 }

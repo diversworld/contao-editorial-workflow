@@ -1,6 +1,7 @@
 <?php
 
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
+use Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
 
@@ -20,6 +21,8 @@ $GLOBALS['TL_DCA']['tl_page']['fields']['workflow_comment'] = [
     'eval'      => ['tl_class' => 'clr'],
     'sql'       => "text NULL",
 ];
+
+$GLOBALS['TL_DCA']['tl_page']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
 
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)

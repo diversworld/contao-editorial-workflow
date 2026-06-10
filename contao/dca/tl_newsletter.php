@@ -1,6 +1,8 @@
 <?php
 
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
+use Diversworld\ContaoEditorialWorkflow\Backend\WorkflowApprovalsModule;
+use Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
 
@@ -21,8 +23,8 @@ $GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_comment'] = [
     'sql' => "text NULL",
 ];
 
-$GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback'] = [\Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener::class, 'onLabel'];
-$GLOBALS['TL_DCA']['tl_newsletter']['list']['operations']['send']['button_callback'] = [\Diversworld\ContaoEditorialWorkflow\Backend\WorkflowApprovalsModule::class, 'checkSendPermission'];
+$GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
+$GLOBALS['TL_DCA']['tl_newsletter']['list']['operations']['send']['button_callback'] = [WorkflowApprovalsModule::class, 'checkSendPermission'];
 
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'title_legend', PaletteManipulator::POSITION_AFTER)

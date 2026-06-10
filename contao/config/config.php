@@ -18,4 +18,8 @@ $GLOBALS['BE_MOD']['system']['editorial_workflow_approvals'] = [
     'disablePermissionChecks' => true,
 ];
 
+$GLOBALS['BE_MOD']['system']['editorial_workflow_log'] = [
+    'table' => 'tl_editorial_workflow_log',
+];
+
 $GLOBALS['TL_HOOKS']['parseBackendTemplate'][] = [DashboardListener::class, 'onParseBackendTemplate'];

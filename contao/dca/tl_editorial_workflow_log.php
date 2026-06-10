@@ -94,9 +94,3 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
     ],
 ];
 
-/**
- * Register the backend module
- */
-$GLOBALS['BE_MOD']['system']['editorial_workflow_log'] = [
-    'table' => 'tl_editorial_workflow_log',
-];

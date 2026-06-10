@@ -21,6 +21,8 @@ $GLOBALS['TL_DCA']['tl_calendar_events']['fields']['workflow_comment'] = [
     'sql'       => "text NULL",
 ];
 
+$GLOBALS['TL_DCA']['tl_calendar_events']['list']['label']['label_callback'] = [\Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener::class, 'onLabel'];
+
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
     ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
