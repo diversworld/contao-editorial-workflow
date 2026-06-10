@@ -22,7 +22,7 @@ class ApprovalDashboard
         private readonly RouterInterface $router,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly Connection $db,
-        private readonly array      $enabledTables,
+        private readonly array $enabledTables,
     )
     {
     }
