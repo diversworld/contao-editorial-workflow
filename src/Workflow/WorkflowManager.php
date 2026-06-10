@@ -213,7 +213,7 @@ class WorkflowManager
         return $status ?: WorkflowStatus::STATUS_DRAFT;
     }
 
-    private function isEnabledWorkflowTable(string $table): bool
+    public function isEnabledWorkflowTable(string $table): bool
     {
         return in_array($table, $this->enabledTables, true) && preg_match('/^tl_[a-z0-9_]+$/', $table) === 1;
     }
@@ -223,9 +223,9 @@ class WorkflowManager
         return isset($this->getTableColumns($table)[$column]);
     }
 
-    private function getTitleColumn(string $table): ?string
+    public function getTitleColumn(string $table): ?string
     {
-        foreach (['title', 'headline', 'name', 'subject', 'question', 'alias', 'type'] as $column) {
+        foreach (['headline', 'title', 'name', 'subject', 'question', 'alias', 'type'] as $column) {
             if ($this->tableHasColumn($table, $column)) {
                 return $column;
             }
@@ -289,6 +289,8 @@ class WorkflowManager
             $notificationType = 'workflow_approved';
         } elseif ($toStatus === WorkflowStatus::STATUS_REJECTED) {
             $notificationType = 'workflow_rejected';
+        } elseif ($toStatus === WorkflowStatus::STATUS_PUBLISHED) {
+            $notificationType = 'workflow_published';
         }
 
         $userName = '';
@@ -314,8 +316,13 @@ class WorkflowManager
             $record = $this->db->fetchAssociative("SELECT * FROM $table WHERE id = ?", [$id]);
             if ($record) {
                 foreach ($record as $k => $v) {
-                    if (!is_array($v)) {
+                    if ($v !== null && !is_array($v) && !is_object($v)) {
                         $tokens['record_' . $k] = (string)$v;
+
+                        // Datum/Zeit-Konvertierung für bekannte Felder
+                        if (in_array($k, ['date', 'time', 'startTime', 'endTime', 'startDate', 'endDate', 'tstamp'], true) && is_numeric($v) && (int)$v > 0) {
+                            $tokens['record_' . $k . '_formatted'] = date($this->getDateFormat($k), (int)$v);
+                        }
                     }
                 }
 
@@ -380,10 +387,28 @@ class WorkflowManager
 
     private function getAdminEmail(): string
     {
-        if (!$this->framework->isInitialized()) {
-            return '';
+        if ($this->framework->isInitialized()) {
+            $email = $this->framework->getAdapter(Config::class)->get('adminEmail');
+            if ($email) {
+                return (string)$email;
+            }
         }
 
-        return (string)($this->framework->getAdapter(Config::class)->get('adminEmail') ?: '');
+        return '';
+    }
+
+    private function getDateFormat(string $column): string
+    {
+        if (!$this->framework->isInitialized()) {
+            return 'Y-m-d H:i:s';
+        }
+
+        $config = $this->framework->getAdapter(Config::class);
+
+        return match ($column) {
+            'date', 'startDate', 'endDate' => $config->get('dateFormat') ?: 'Y-m-d',
+            'time', 'startTime', 'endTime' => $config->get('timeFormat') ?: 'H:i',
+            default => $config->get('datimFormat') ?: 'Y-m-d H:i',
+        };
     }
 }

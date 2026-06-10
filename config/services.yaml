@@ -16,37 +16,41 @@ services:
             - ../src/Session
             - ../src/NotificationCenter/WorkflowNotificationType.php
 
-    Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowStatusChangeNotificationType:
+    # Notification Types
+    diversworld.contao_editorial_workflow.notification.status_change:
         class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
         arguments:
             $name: 'workflow_status_change'
         tags:
             - { name: terminal42_notification_center.notification_type }
 
-    Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowReviewRequestedNotificationType:
+    diversworld.contao_editorial_workflow.notification.review_requested:
         class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
         arguments:
             $name: 'workflow_review_requested'
         tags:
             - { name: terminal42_notification_center.notification_type }
 
-    Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowApprovedNotificationType:
+    diversworld.contao_editorial_workflow.notification.approved:
         class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
         arguments:
             $name: 'workflow_approved'
         tags:
             - { name: terminal42_notification_center.notification_type }
 
-    Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowRejectedNotificationType:
+    diversworld.contao_editorial_workflow.notification.rejected:
         class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
         arguments:
             $name: 'workflow_rejected'
         tags:
             - { name: terminal42_notification_center.notification_type }
 
-    Diversworld\ContaoEditorialWorkflow\EventListener\NotificationCenter\NotificationTypeListener:
+    diversworld.contao_editorial_workflow.notification.published:
+        class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
+        arguments:
+            $name: 'workflow_published'
         tags:
-            - { name: kernel.event_listener, event: terminal42_notification_center.get_token_definitions }
+            - { name: terminal42_notification_center.notification_type }
 
     # Add a session bag
     diversworld.contao_editorial_workflow.session.factory:
@@ -65,8 +69,6 @@ services:
 
     Diversworld\ContaoEditorialWorkflow\Dashboard\ApprovalDashboard:
         public: true
-        arguments:
-            $csrfTokenManager: '@contao.csrf.token_manager'
 
     Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager:
         public: true

@@ -5,6 +5,7 @@ namespace Diversworld\ContaoEditorialWorkflow\Dashboard;
 use Contao\StringUtil;
 use Contao\Message;
 use Contao\CoreBundle\Exception\ResponseException;
+use Doctrine\DBAL\Connection;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -20,6 +21,8 @@ class ApprovalDashboard
         private readonly RequestStack    $requestStack,
         private readonly RouterInterface $router,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly Connection $db,
+        private readonly array $enabledTables,
     )
     {
     }
@@ -28,7 +31,7 @@ class ApprovalDashboard
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        if ($request === null || !$request->isMethod('POST') || $request->request->get('FORM_SUBMIT') !== 'tl_editorial_workflow_approval') {
+        if ($request === null || !$request->isMethod('POST') || !in_array($request->request->get('FORM_SUBMIT'), ['tl_editorial_workflow_approval', 'tl_editorial_workflow_publish'], true)) {
             return;
         }
 
@@ -41,8 +44,13 @@ class ApprovalDashboard
             return;
         }
 
-        if ($this->workflowManager->changeStatus($table, $id, WorkflowStatus::STATUS_APPROVED, $this->getLabel('approvedComment'))) {
-            Message::addConfirmation($this->getLabel('approved'));
+        $isPublish = $request->request->get('FORM_SUBMIT') === 'tl_editorial_workflow_publish';
+        $newStatus = $isPublish ? WorkflowStatus::STATUS_PUBLISHED : WorkflowStatus::STATUS_APPROVED;
+        $commentLabel = $isPublish ? 'publishedComment' : 'approvedComment';
+        $successLabel = $isPublish ? 'published' : 'approved';
+
+        if ($this->workflowManager->changeStatus($table, $id, $newStatus, $this->getLabel($commentLabel))) {
+            Message::addConfirmation($this->getLabel($successLabel));
         } else {
             Message::addError($this->getLabel('approvalDenied'));
         }
@@ -52,11 +60,27 @@ class ApprovalDashboard
 
     public function render(bool $compact = false): string
     {
-        if (!$this->workflowManager->canReview()) {
+        if (!$this->workflowManager->canReview() && !$this->workflowManager->canPublish()) {
             return '';
         }
 
-        $records = $this->workflowManager->getPendingReviewRecords($compact ? 10 : 100);
+        $records = [];
+
+        if ($this->workflowManager->canReview()) {
+            $records = $this->workflowManager->getPendingReviewRecords($compact ? 10 : 100);
+        }
+
+        if ($this->workflowManager->canPublish()) {
+            $approvedRecords = $this->getApprovedRecords($compact ? 10 : 100);
+            $records = array_merge($records, $approvedRecords);
+
+            // Re-sort by tstamp
+            usort($records, static fn(array $a, array $b): int => [$b['tstamp'], $b['id']] <=> [$a['tstamp'], $a['id']]);
+
+            if ($compact && count($records) > 10) {
+                $records = array_slice($records, 0, 10);
+            }
+        }
 
         if ($records === []) {
             return sprintf(
@@ -76,7 +100,7 @@ class ApprovalDashboard
                 $this->escape($record['title']),
                 $record['tstamp'] > 0 ? $this->escape(date('d.m.Y H:i', $record['tstamp'])) : '-',
                 $this->renderEditLink($record['table'], $record['id']),
-                $this->renderApprovalForm($record['table'], $record['id'])
+                $this->renderApprovalForm($record['table'], $record['id'], $record['status'])
             );
         }
 
@@ -90,18 +114,38 @@ class ApprovalDashboard
         );
     }
 
-    private function renderApprovalForm(string $table, int $id): string
+    private function renderApprovalForm(string $table, int $id, string $status): string
     {
-        $token = $this->csrfTokenManager->getToken('contao_csrf_token')->getValue();
+        $canReview = $this->workflowManager->canReview();
+        $canPublish = $this->workflowManager->canPublish();
 
-        return sprintf(
-            '<form method="post" style="display:inline" data-turbo="false"><input type="hidden" name="FORM_SUBMIT" value="tl_editorial_workflow_approval"><input type="hidden" name="REQUEST_TOKEN" value="%s"><input type="hidden" name="workflow_table" value="%s"><input type="hidden" name="workflow_id" value="%d"><button type="submit" class="tl_submit" title="%s">%s</button></form>',
-            $this->escape($token),
-            $this->escape($table),
-            $id,
-            $this->escape($this->getLabel('approve')),
-            $this->escape($this->getLabel('approve'))
-        );
+        if ($status === WorkflowStatus::STATUS_REVIEW && $canReview) {
+            $token = $this->csrfTokenManager->getToken('contao_csrf_token')->getValue();
+
+            return sprintf(
+                '<form method="post" style="display:inline" data-turbo="false"><input type="hidden" name="FORM_SUBMIT" value="tl_editorial_workflow_approval"><input type="hidden" name="REQUEST_TOKEN" value="%s"><input type="hidden" name="workflow_table" value="%s"><input type="hidden" name="workflow_id" value="%d"><button type="submit" class="tl_submit" title="%s">%s</button></form>',
+                $this->escape($token),
+                $this->escape($table),
+                $id,
+                $this->escape($this->getLabel('approve')),
+                $this->escape($this->getLabel('approve'))
+            );
+        }
+
+        if ($status === WorkflowStatus::STATUS_APPROVED && $canPublish) {
+            $token = $this->csrfTokenManager->getToken('contao_csrf_token')->getValue();
+
+            return sprintf(
+                '<form method="post" style="display:inline" data-turbo="false"><input type="hidden" name="FORM_SUBMIT" value="tl_editorial_workflow_publish"><input type="hidden" name="REQUEST_TOKEN" value="%s"><input type="hidden" name="workflow_table" value="%s"><input type="hidden" name="workflow_id" value="%d"><button type="submit" class="tl_submit" title="%s">%s</button></form>',
+                $this->escape($token),
+                $this->escape($table),
+                $id,
+                $this->escape($this->getLabel('publish')),
+                $this->escape($this->getLabel('publish'))
+            );
+        }
+
+        return '';
     }
 
     private function renderEditLink(string $table, int $id): string
@@ -166,6 +210,45 @@ class ApprovalDashboard
         }
 
         return $table;
+    }
+
+    private function getApprovedRecords(int $limit): array
+    {
+        $records = [];
+
+        foreach ($this->enabledTables as $table) {
+            if (!$this->workflowManager->isEnabledWorkflowTable($table)) {
+                continue;
+            }
+
+            $titleColumn = $this->workflowManager->getTitleColumn($table);
+            $selectTitle = $titleColumn ? sprintf('%s AS record_title', $titleColumn) : "'' AS record_title";
+
+            $rows = $this->db->fetchAllAssociative(
+                sprintf(
+                    'SELECT id, workflow_status, %s, tstamp AS record_tstamp FROM %s WHERE workflow_status = ? ORDER BY tstamp DESC, id DESC',
+                    $selectTitle,
+                    $table
+                ),
+                [WorkflowStatus::STATUS_APPROVED]
+            );
+
+            foreach ($rows as $row) {
+                if (!$this->workflowManager->canChangeStatus($table, (int)$row['id'], WorkflowStatus::STATUS_PUBLISHED)) {
+                    continue;
+                }
+
+                $records[] = [
+                    'table' => $table,
+                    'id' => (int)$row['id'],
+                    'status' => (string)$row['workflow_status'],
+                    'title' => trim((string)($row['record_title'] ?? '')) ?: sprintf('%s #%d', $table, $row['id']),
+                    'tstamp' => (int)($row['record_tstamp'] ?? 0),
+                ];
+            }
+        }
+
+        return $records;
     }
 
     private function getLabel(string $key): string

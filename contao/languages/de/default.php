@@ -38,6 +38,7 @@ $GLOBALS['TL_LANG']['notification_center']['token']['author_name'] = 'Autor-Name
 $GLOBALS['TL_LANG']['notification_center']['token']['record_label'] = 'Datensatz-Titel';
 $GLOBALS['TL_LANG']['notification_center']['token']['admin_email'] = 'Administrator E-Mail';
 $GLOBALS['TL_LANG']['notification_center']['token']['record_details'] = 'Datensatz-Details (record_*)';
+$GLOBALS['TL_LANG']['notification_center']['token']['record_details_formatted'] = 'Datensatz-Details formatiert (record_*_formatted)';
 
 $GLOBALS['TL_LANG']['tl_user']['editorial_workflow_permissions'] = ['Workflow-Berechtigungen', 'Hier können Sie festlegen, welche Workflow-Rollen der Benutzer oder die Gruppe besitzt.'];
 $GLOBALS['TL_LANG']['tl_user']['editorial_workflow_permissions_ref'] = [
@@ -46,7 +47,8 @@ $GLOBALS['TL_LANG']['tl_user']['editorial_workflow_permissions_ref'] = [
 ];
 
 $GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow'] = 'Editorial Workflow';
-$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_review'] = ['In Prüfung', 'Wird versendet, wenn ein Inhalt zur Prüfung eingereicht wurde.'];
-$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_approved'] = ['Freigabe erteilt', 'Wird versendet, wenn ein Inhalt freigegeben wurde.'];
-$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_rejected'] = ['Freigabe abgelehnt', 'Wird versendet, wenn ein Inhalt abgelehnt wurde.'];
-$GLOBALS['TL_LANG']['tl_nc_notification']['type']['editorial_workflow_published'] = ['Veröffentlichung erfolgt', 'Wird versendet, wenn ein Inhalt veröffentlicht wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['workflow_status_change'] = ['Status-Änderung', 'Wird versendet, wenn sich der Status eines Inhalts ändert.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['workflow_review_requested'] = ['In Prüfung', 'Wird versendet, wenn ein Inhalt zur Prüfung eingereicht wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['workflow_approved'] = ['Freigabe erteilt', 'Wird versendet, wenn ein Inhalt freigegeben wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['workflow_rejected'] = ['Freigabe abgelehnt', 'Wird versendet, wenn ein Inhalt abgelehnt wurde.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type']['workflow_published'] = ['Veröffentlichung erfolgt', 'Wird versendet, wenn ein Inhalt veröffentlicht wurde.'];

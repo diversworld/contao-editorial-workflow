@@ -10,15 +10,16 @@ use Terminal42\NotificationCenterBundle\Token\Definition\TextTokenDefinition;
 
 class WorkflowNotificationType implements NotificationTypeInterface
 {
-    public function __construct(private readonly TokenDefinitionFactoryInterface $factory)
+    public function __construct(
+        private readonly TokenDefinitionFactoryInterface $factory,
+        private readonly string                          $name,
+    )
     {
     }
 
     public function getName(): string
     {
-        // Da wir mehrere Typen über denselben Service registrieren,
-        // wird dies vom NC meist über das Service-Tag gesteuert.
-        return 'workflow_notification';
+        return $this->name;
     }
 
     public function getTokenDefinitions(): array
@@ -35,6 +36,7 @@ class WorkflowNotificationType implements NotificationTypeInterface
             $this->factory->create(TextTokenDefinition::class, 'record_label', 'notification_center.token.record_label'),
             $this->factory->create(EmailTokenDefinition::class, 'admin_email', 'notification_center.token.admin_email'),
             $this->factory->create(AnythingTokenDefinition::class, 'record_*', 'notification_center.token.record_details'),
+            $this->factory->create(AnythingTokenDefinition::class, 'record_*_formatted', 'notification_center.token.record_details_formatted'),
         ];
     }
 }
