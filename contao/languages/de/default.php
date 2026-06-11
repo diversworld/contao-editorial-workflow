@@ -20,6 +20,7 @@ $GLOBALS['TL_LANG']['MSC']['editorial_workflow_dashboard'] = [
     'date' => 'Geändert',
     'edit' => 'Bearbeiten',
     'approve' => 'Freigeben',
+    'publish' => 'Freigeben',
     'approved' => 'Der Beitrag wurde freigegeben.',
     'approvalDenied' => 'Der Beitrag konnte nicht freigegeben werden.',
     'approvedComment' => 'Freigabe über das Workflow-Dashboard',

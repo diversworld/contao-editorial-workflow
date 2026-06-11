@@ -11,7 +11,7 @@ use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Symfony\Component\Security\Csrf\CsrfToken;
 
 class ApprovalDashboard
@@ -20,9 +20,10 @@ class ApprovalDashboard
         private readonly WorkflowManager $workflowManager,
         private readonly RequestStack    $requestStack,
         private readonly RouterInterface $router,
-        private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly ContaoCsrfTokenManager $csrfTokenManager,
         private readonly Connection $db,
         private readonly array $enabledTables,
+        private readonly string $csrfTokenName,
     )
     {
     }
@@ -37,9 +38,9 @@ class ApprovalDashboard
 
         $table = (string)$request->request->get('workflow_table');
         $id = (int)$request->request->get('workflow_id');
-        $token = (string)$request->request->get('REQUEST_TOKEN');
+        $token = (string)($request->request->get('REQUEST_TOKEN') ?: $request->request->get($this->csrfTokenName));
 
-        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken('contao_csrf_token', $token))) {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken($this->csrfTokenName, $token))) {
             Message::addError($this->getLabel('invalidToken') ?: 'Invalid CSRF token.');
             return;
         }
@@ -120,7 +121,7 @@ class ApprovalDashboard
         $canPublish = $this->workflowManager->canPublish();
 
         if ($status === WorkflowStatus::STATUS_REVIEW && $canReview) {
-            $token = $this->csrfTokenManager->getToken('contao_csrf_token')->getValue();
+            $token = $this->csrfTokenManager->getToken($this->csrfTokenName)->getValue();
 
             return sprintf(
                 '<form method="post" style="display:inline" data-turbo="false"><input type="hidden" name="FORM_SUBMIT" value="tl_editorial_workflow_approval"><input type="hidden" name="REQUEST_TOKEN" value="%s"><input type="hidden" name="workflow_table" value="%s"><input type="hidden" name="workflow_id" value="%d"><button type="submit" class="tl_submit" title="%s">%s</button></form>',
@@ -133,7 +134,7 @@ class ApprovalDashboard
         }
 
         if ($status === WorkflowStatus::STATUS_APPROVED && $canPublish) {
-            $token = $this->csrfTokenManager->getToken('contao_csrf_token')->getValue();
+            $token = $this->csrfTokenManager->getToken($this->csrfTokenName)->getValue();
 
             return sprintf(
                 '<form method="post" style="display:inline" data-turbo="false"><input type="hidden" name="FORM_SUBMIT" value="tl_editorial_workflow_publish"><input type="hidden" name="REQUEST_TOKEN" value="%s"><input type="hidden" name="workflow_table" value="%s"><input type="hidden" name="workflow_id" value="%d"><button type="submit" class="tl_submit" title="%s">%s</button></form>',
