@@ -22,7 +22,10 @@ $GLOBALS['TL_DCA']['tl_faq']['fields']['workflow_comment'] = [
     'sql'       => "text NULL",
 ];
 
-$GLOBALS['TL_DCA']['tl_faq']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
+if (isset($GLOBALS['TL_DCA']['tl_faq']['list']['sorting']['child_record_callback'])) {
+    $GLOBALS['TL_DCA']['tl_faq']['list']['sorting']['child_record_callback_orig'] = $GLOBALS['TL_DCA']['tl_faq']['list']['sorting']['child_record_callback'];
+}
+$GLOBALS['TL_DCA']['tl_faq']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onFaqChildRecord'];
 
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)

@@ -22,6 +22,11 @@ $GLOBALS['TL_DCA']['tl_news']['fields']['workflow_comment'] = [
     'sql'       => "text NULL",
 ];
 
+if (isset($GLOBALS['TL_DCA']['tl_news']['list']['sorting']['child_record_callback'])) {
+    $GLOBALS['TL_DCA']['tl_news']['list']['sorting']['child_record_callback_orig'] = $GLOBALS['TL_DCA']['tl_news']['list']['sorting']['child_record_callback'];
+}
+$GLOBALS['TL_DCA']['tl_news']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onNewsChildRecord'];
+
 $GLOBALS['TL_DCA']['tl_news']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
 
 $manipulator = PaletteManipulator::create()

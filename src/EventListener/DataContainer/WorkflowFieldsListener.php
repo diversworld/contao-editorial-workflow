@@ -2,9 +2,12 @@
 
 namespace Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer;
 
+use Contao\Config;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Date;
+use Contao\DC_Table;
+use Contao\System;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
@@ -91,11 +94,10 @@ class WorkflowFieldsListener
     }
 
     #[AsCallback(table: 'tl_page', target: 'list.label.label')]
+    #[AsCallback(table: 'tl_newsletter', target: 'list.label.label')]
     #[AsCallback(table: 'tl_news', target: 'list.label.label')]
     #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label')]
-    #[AsCallback(table: 'tl_faq', target: 'list.label.label')]
-    #[AsCallback(table: 'tl_newsletter', target: 'list.label.label')]
-    public function onLabel($row, $label, DataContainer $dc, $args): array|string
+    public function onLabel($row, $label, DataContainer $dc, $args = null): array|string
     {
         // Newsletter hat eine spezielle Logik, um das Original-Label zu generieren
         if ($dc->table === 'tl_newsletter' && class_exists('tl_newsletter')) {
@@ -116,16 +118,25 @@ class WorkflowFieldsListener
 
             // Fallback für Contao 5+, falls tl_news nicht existiert oder addNews fehlschlägt
             if ($label === '' || $label === $row['headline']) {
-                $date = Date::parse(\Contao\Config::get('datimFormat'), $row['date']);
-                $label = sprintf('%s <span class="label-info">[%s]</span>', $row['headline'], $date);
+                $date = Date::parse(Config::get('datimFormat'), $row['date']);
+                $time = Date::parse(Config::get('timeFormat'), $row['time']);
+                $label = sprintf('%s <span class="label-info">[%s %s]</span>', $row['headline'], $date, $time);
             }
         }
 
         // Kalender hat eine spezielle Logik
-        if ($dc->table === 'tl_calendar_events' && class_exists('tl_calendar_events')) {
-            $events = new \tl_calendar_events();
-            if (method_exists($events, 'listEvents')) {
-                $label = $events->listEvents($row, $label, $dc, $args);
+        if ($dc->table === 'tl_calendar_events') {
+            if (class_exists('tl_calendar_events')) {
+                $events = new \tl_calendar_events();
+                if (method_exists($events, 'listEvents')) {
+                    $label = $events->listEvents($row, $label, $dc, $args);
+                }
+            }
+
+            // Fallback für Contao 5+, falls tl_calendar_events nicht existiert oder listEvents fehlschlägt
+            if ($label === '' || $label === $row['title']) {
+                $date = Date::parse(Config::get('dateFormat'), $row['startTime']);
+                $label = sprintf('%s <span class="label-info">[%s]</span>', $row['title'], $date);
             }
         }
 
@@ -141,29 +152,89 @@ class WorkflowFieldsListener
     }
 
     #[AsCallback(table: 'tl_article', target: 'list.sorting.child_record')]
-    public function onArticleChildRecord($row): string
+    public function onChildRecord($row, ?DataContainer $dc = null): string
     {
-        return $this->handleChildRecord($row, 'tl_article');
+        return $this->handleChildRecord($row, 'tl_article', $dc);
     }
 
+    #[AsCallback(table: 'tl_news', target: 'list.sorting.child_record')]
+    public function onNewsChildRecord($row, ?DataContainer $dc = null): string
+    {
+        return $this->handleChildRecord($row, 'tl_news', $dc);
+    }
+
+    #[AsCallback(table: 'tl_calendar_events', target: 'list.sorting.child_record')]
+    public function onCalendarEventsChildRecord($row, ?DataContainer $dc = null): string
+    {
+        return $this->handleChildRecord($row, 'tl_calendar_events', $dc);
+    }
+
+    #[AsCallback(table: 'tl_faq', target: 'list.sorting.child_record')]
+    public function onFaqChildRecord($row, ?DataContainer $dc = null): string
+    {
+        return $this->handleChildRecord($row, 'tl_faq', $dc);
+    }
     #[AsCallback(table: 'tl_content', target: 'list.sorting.child_record')]
-    public function onContentChildRecord($row): string
+    public function onContentChildRecord($row, ?DataContainer $dc = null): string
     {
-        return $this->handleChildRecord($row, 'tl_content');
+        return $this->handleChildRecord($row, 'tl_content', $dc);
     }
 
-    private function handleChildRecord($row, $table): string
+    private function handleChildRecord($row, $table, ?DataContainer $dc = null): string
     {
         $label = '';
 
+        // Ensure $dc is a DataContainer instance to satisfy type hints in callbacks.
+        // Contao 5's child_record_callback for mode 4 tables sometimes only passes the row,
+        // but many existing callbacks (like label_callback or Cgoit's) require a DataContainer.
+        if ($dc === null && class_exists(DC_Table::class)) {
+            $dc = new DC_Table($table);
+        }
+
         if (isset($GLOBALS['TL_DCA'][$table]['list']['sorting']['child_record_callback_orig'])) {
             $callback = $GLOBALS['TL_DCA'][$table]['list']['sorting']['child_record_callback_orig'];
-            $label = $this->executeCallback($callback, [$row]);
+
+            // Standard Contao news/calendar callbacks expect ($row, $label) where $label is a string.
+            // If we pass $dc as the second argument, it might cause a string conversion error in some versions.
+            if (is_array($callback) && is_string($callback[0]) && (str_starts_with($callback[0], 'tl_') || str_contains($callback[0], 'Calendar'))) {
+                $label = $this->executeCallback($callback, [$row, '']);
+            } else {
+                $label = $this->executeCallback($callback, [$row, $dc]);
+            }
+        } elseif (isset($GLOBALS['TL_DCA'][$table]['list']['label']['label_callback']) && $table !== 'tl_article') {
+            $callback = $GLOBALS['TL_DCA'][$table]['list']['label']['label_callback'];
+
+            // Special handling for callbacks that expect standard label_callback arguments:
+            // ($row, $label, DataContainer $dc, $args)
+            if ($table === 'tl_calendar_events') {
+                $label = $this->executeCallback($callback, [$row, '', $dc, []]);
+            } else {
+                $label = $this->executeCallback($callback, [$row, '', $dc, null]);
+            }
         }
 
         // Fallback wenn kein Callback da ist
         if (empty($label)) {
-            $label = $row['title'] ?? $row['headline'] ?? ($row['text'] ? substr(strip_tags($row['text']), 0, 50) : 'ID ' . $row['id']);
+            if ($table === 'tl_news') {
+                $date = Date::parse(Config::get('datimFormat'), $row['date']);
+                $time = Date::parse(Config::get('timeFormat'), $row['time']);
+                $label = sprintf('%s <span class="label-info">[%s %s]</span>', $row['headline'], $date, $time);
+            } elseif ($table === 'tl_faq') {
+                $label = $row['question'];
+            } elseif ($table === 'tl_calendar_events') {
+                if (class_exists('tl_calendar_events')) {
+                    $events = new \tl_calendar_events();
+                    if (method_exists($events, 'listEvents')) {
+                        $label = $events->listEvents($row, $label);
+                    }
+                }
+                if (empty($label) || $label === $row['title']) {
+                    $date = Date::parse(Config::get('dateFormat'), $row['startTime']);
+                    $label = sprintf('%s <span class="label-info">[%s]</span>', $row['title'], $date);
+                }
+            } else {
+                $label = $row['title'] ?? $row['headline'] ?? ($row['text'] ? substr(strip_tags($row['text']), 0, 50) : 'ID ' . $row['id']);
+            }
         }
 
         return $this->appendStatusToLabel($label, $row);
@@ -193,16 +264,41 @@ class WorkflowFieldsListener
     {
         if (is_array($callback)) {
             if (is_string($callback[0])) {
-                $instance = new $callback[0]();
-                return call_user_func_array([$instance, $callback[1]], $args);
+                $instance = $this->resolveCallbackInstance($callback[0]);
+
+                // Reflection to handle varied argument counts if needed,
+                // but for now we just pass what we have.
+                return (string)call_user_func_array([$instance, $callback[1]], $args);
             }
-            return call_user_func_array([$callback[0], $callback[1]], $args);
+            return (string)call_user_func_array([$callback[0], $callback[1]], $args);
+        }
+
+        if (is_string($callback)) {
+            // Invokable service callback (e.g. a class registered via #[AsCallback])
+            $instance = $this->resolveCallbackInstance($callback);
+            return (string)call_user_func_array($instance, $args);
         }
 
         if (is_callable($callback)) {
-            return call_user_func_array($callback, $args);
+            return (string)call_user_func_array($callback, $args);
         }
 
         return '';
+    }
+
+    /**
+     * Resolve a callback class either from the Contao service container (for
+     * services registered via #[AsCallback] that have constructor dependencies)
+     * or by instantiating it directly as a fallback.
+     */
+    private function resolveCallbackInstance(string $class): object
+    {
+        $container = System::getContainer();
+
+        if ($container !== null && $container->has($class)) {
+            return $container->get($class);
+        }
+
+        return new $class();
     }
 }

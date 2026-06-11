@@ -1,8 +1,7 @@
 <?php
 
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
-use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
-
+use Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener;
 
 $GLOBALS['TL_DCA']['tl_calendar_events']['fields']['workflow_status'] = [
     'label'     => &$GLOBALS['TL_LANG']['MSC']['workflow_status'],
@@ -21,7 +20,12 @@ $GLOBALS['TL_DCA']['tl_calendar_events']['fields']['workflow_comment'] = [
     'sql'       => "text NULL",
 ];
 
-$GLOBALS['TL_DCA']['tl_calendar_events']['list']['label']['label_callback'] = [\Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener::class, 'onLabel'];
+if (isset($GLOBALS['TL_DCA']['tl_calendar_events']['list']['sorting']['child_record_callback'])) {
+    $GLOBALS['TL_DCA']['tl_calendar_events']['list']['sorting']['child_record_callback_orig'] = $GLOBALS['TL_DCA']['tl_calendar_events']['list']['sorting']['child_record_callback'];
+}
+$GLOBALS['TL_DCA']['tl_calendar_events']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onCalendarEventsChildRecord'];
+
+$GLOBALS['TL_DCA']['tl_calendar_events']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
 
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)

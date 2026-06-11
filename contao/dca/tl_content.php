@@ -25,7 +25,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['workflow_comment'] = [
 if (isset($GLOBALS['TL_DCA']['tl_content']['list']['sorting']['child_record_callback'])) {
     $GLOBALS['TL_DCA']['tl_content']['list']['sorting']['child_record_callback_orig'] = $GLOBALS['TL_DCA']['tl_content']['list']['sorting']['child_record_callback'];
 }
-$GLOBALS['TL_DCA']['tl_content']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onChildRecord'];
+$GLOBALS['TL_DCA']['tl_content']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onContentChildRecord'];
 
 $manipulator = PaletteManipulator::create()
     ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
