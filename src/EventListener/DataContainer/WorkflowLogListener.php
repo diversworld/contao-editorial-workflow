@@ -33,9 +33,9 @@ class WorkflowLogListener
 
         return sprintf(
             '<div class="tl_content_left"><span style="color:#999">[%s]</span> %s <span style="color:#999;padding-left:10px">[%s]</span> <span style="color:#999;padding-left:10px">%s</span><br>%s &rarr; %s</div>',
-            $row['id'],
+            $row['id'] ?? '-',
             $date,
-            $row['ptable'],
+            $row['ptable'] ?? '-',
             $user,
             $fromLabel,
             $toLabel

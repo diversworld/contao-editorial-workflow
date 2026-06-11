@@ -19,7 +19,7 @@ $GLOBALS['BE_MOD']['system']['editorial_workflow_approvals'] = [
 ];
 
 $GLOBALS['BE_MOD']['system']['editorial_workflow_log'] = [
-    'table' => 'tl_editorial_workflow_log',
+    'tables' => ['tl_editorial_workflow_log'],
 ];
 
 $GLOBALS['TL_HOOKS']['parseBackendTemplate'][] = [DashboardListener::class, 'onParseBackendTemplate'];

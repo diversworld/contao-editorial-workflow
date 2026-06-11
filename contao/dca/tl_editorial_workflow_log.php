@@ -1,6 +1,9 @@
 <?php
 
+use Contao\Backend;
+use Contao\DataContainer;
 use Contao\DC_Table;
+use Contao\System;
 
 $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
     'config' => [
@@ -14,36 +17,36 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
             ],
         ],
     ],
-    'list' => [
-        'sorting' => [
-            'mode' => 2,
-            'fields' => ['tstamp DESC'],
-            'flag' => 6,
-            'panelLayout' => 'filter;search,limit',
-        ],
-        'label' => [
-            'fields' => ['id'],
+    // List
+    'list' => array
+    (
+        'sorting' => array
+        (
+            'mode' => DataContainer::MODE_SORTABLE,
+            'fields' => array('tstamp', 'id'),
+            'panelLayout' => 'search,filter,sort,limit',
+            'defaultSearchField' => 'text'
+        ),
+        'label' => array
+        (
+            'fields' => array('id'),
             'showColumns' => false,
-        ],
-        'global_operations' => [
-            'all' => [
+        ),
+        'global_operations' => array
+        (
+            'all' => array
+            (
                 'label' => &$GLOBALS['TL_LANG']['MSC']['all'],
                 'href' => 'act=select',
                 'class' => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
-        ],
+                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"'
+            )
+        ),
         'operations' => [
-            'show' /*=> [
-                'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['show'],
-                'href' => 'act=show',
-                'icon' => 'show.svg',
-            ],*/
+            'show',
+            'delete'
         ],
-    ],
-    'palettes' => [
-        'default' => '{log_legend},tstamp,user_id,ip;{target_legend},ptable,pid,version;{workflow_legend},from_status,to_status,comment',
-    ],
+    ),
     'fields' => [
         'id' => [
             'sql' => "int(10) unsigned NOT NULL auto_increment",
@@ -110,3 +113,43 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
     ],
 ];
 
+class tl_editorial_workflow_log extends Backend
+{
+    /**
+     * Colorize the log entries depending on their category
+     *
+     * @param array $row
+     * @param string $label
+     *
+     * @return string
+     */
+    public function colorize($row, $label)
+    {
+        $class = 'ellipsis';
+        dump($row);
+        switch ($row['action']) {
+            case 'CONFIGURATION':
+            case 'REPOSITORY':
+                $class .= ' tl_blue';
+                break;
+
+            case 'CRON':
+                $class .= ' tl_green';
+                break;
+
+            case 'ERROR':
+                $class .= ' tl_red';
+                break;
+
+            default:
+                if (isset($GLOBALS['TL_HOOKS']['colorizeLogEntries']) && is_array($GLOBALS['TL_HOOKS']['colorizeLogEntries'])) {
+                    foreach ($GLOBALS['TL_HOOKS']['colorizeLogEntries'] as $callback) {
+                        $label = System::importStatic($callback[0])->{$callback[1]}($row, $label, $class);
+                    }
+                }
+                break;
+        }
+
+        return '<div class="' . $class . '">' . $label . '</div>';
+    }
+}
