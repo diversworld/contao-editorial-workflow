@@ -23,7 +23,7 @@ class ApprovalDashboard
         private readonly ContaoCsrfTokenManager $csrfTokenManager,
         private readonly Connection $db,
         private readonly array $enabledTables,
-        private readonly string                 $csrfTokenName,
+        private readonly string $csrfTokenName,
     )
     {
     }
