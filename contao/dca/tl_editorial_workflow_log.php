@@ -22,8 +22,8 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
             'panelLayout' => 'filter;search,limit',
         ],
         'label' => [
-            'fields' => ['tstamp', 'user_id', 'ptable'],
-            'showColumns' => true,
+            'fields' => ['id'],
+            'showColumns' => false,
         ],
         'global_operations' => [
             'all' => [
@@ -34,11 +34,11 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
             ],
         ],
         'operations' => [
-            'show' => [
+            'show' /*=> [
                 'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['show'],
                 'href' => 'act=show',
                 'icon' => 'show.svg',
-            ],
+            ],*/
         ],
     ],
     'palettes' => [
@@ -59,36 +59,52 @@ $GLOBALS['TL_DCA']['tl_editorial_workflow_log'] = [
         ],
         'ptable' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['ptable'],
+            'sorting' => true,
             'filter' => true,
+            'search' => true,
             'sql' => "varchar(64) NOT NULL default ''",
         ],
         'user_id' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['user_id'],
+            'sorting' => true,
             'filter' => true,
+            'search' => true,
             'foreignKey' => 'tl_user.username',
             'sql' => "int(10) unsigned NOT NULL default 0",
         ],
         'from_status' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['from_status'],
+            'sorting' => true,
             'filter' => true,
+            'search' => true,
             'sql' => "varchar(32) NOT NULL default ''",
         ],
         'to_status' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['to_status'],
+            'sorting' => true,
             'filter' => true,
+            'search' => true,
             'sql' => "varchar(32) NOT NULL default ''",
         ],
         'comment' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['comment'],
+            'sorting' => true,
+            'filter' => true,
             'search' => true,
             'sql' => "text NULL",
         ],
         'version' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['version'],
+            'sorting' => true,
+            'filter' => true,
+            'search' => true,
             'sql' => "int(10) unsigned NOT NULL default 0",
         ],
         'ip' => [
             'label' => &$GLOBALS['TL_LANG']['tl_editorial_workflow_log']['ip'],
+            'sorting' => true,
+            'filter' => true,
+            'search' => true,
             'sql' => "varchar(45) NOT NULL default ''",
         ],
     ],

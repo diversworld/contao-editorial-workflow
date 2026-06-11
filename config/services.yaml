@@ -78,3 +78,6 @@ services:
 
     Diversworld\ContaoEditorialWorkflow\EventListener\DashboardListener:
         public: true
+
+    Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowLogListener:
+        public: true
