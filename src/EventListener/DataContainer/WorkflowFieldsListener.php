@@ -36,7 +36,6 @@ class WorkflowFieldsListener
 
     #[AsCallback(table: 'tl_page', target: 'fields.workflow_status.save')]
     #[AsCallback(table: 'tl_article', target: 'fields.workflow_status.save')]
-    #[AsCallback(table: 'tl_content', target: 'fields.workflow_status.save')]
     #[AsCallback(table: 'tl_news', target: 'fields.workflow_status.save')]
     #[AsCallback(table: 'tl_calendar_events', target: 'fields.workflow_status.save')]
     #[AsCallback(table: 'tl_faq', target: 'fields.workflow_status.save')]
@@ -60,7 +59,6 @@ class WorkflowFieldsListener
 
     #[AsCallback(table: 'tl_page', target: 'fields.workflow_status.options')]
     #[AsCallback(table: 'tl_article', target: 'fields.workflow_status.options')]
-    #[AsCallback(table: 'tl_content', target: 'fields.workflow_status.options')]
     #[AsCallback(table: 'tl_news', target: 'fields.workflow_status.options')]
     #[AsCallback(table: 'tl_calendar_events', target: 'fields.workflow_status.options')]
     #[AsCallback(table: 'tl_faq', target: 'fields.workflow_status.options')]
@@ -173,11 +171,6 @@ class WorkflowFieldsListener
     public function onFaqChildRecord($row, ?DataContainer $dc = null): string
     {
         return $this->handleChildRecord($row, 'tl_faq', $dc);
-    }
-    #[AsCallback(table: 'tl_content', target: 'list.sorting.child_record')]
-    public function onContentChildRecord($row, ?DataContainer $dc = null): string
-    {
-        return $this->handleChildRecord($row, 'tl_content', $dc);
     }
 
     private function handleChildRecord($row, $table, ?DataContainer $dc = null): string

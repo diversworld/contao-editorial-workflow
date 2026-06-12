@@ -28,9 +28,9 @@ Das Modul integriert sich generisch in folgende Contao-Tabellen:
 
 - Seiten (`tl_page`)
 - Artikel (`tl_article`)
-- Inhaltselemente (`tl_content`)
 - Nachrichten (`tl_news`)
 - Events (`tl_calendar_events`)
+- Newsletter (`tl_newsletter`)
 - FAQ (`tl_faq`)
 
 ## Technische Anforderungen
