@@ -29,8 +29,8 @@ class WorkflowManager
         Security        $security,
         RequestStack    $requestStack,
         bool            $fourEyesPrinciple,
-        array           $enabledTables,
-        ?object         $notificationCenter = null
+        array   $enabledTables,
+        ?object $notificationCenter = null
     )
     {
         $this->framework = $framework;
