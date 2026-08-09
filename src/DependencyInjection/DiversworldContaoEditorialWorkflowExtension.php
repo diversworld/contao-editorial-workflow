@@ -42,6 +42,11 @@ class DiversworldContaoEditorialWorkflowExtension extends Extension
 
         $loader->load('parameters.yaml');
         $loader->load('services.yaml');
+
+        if (class_exists('Terminal42\NotificationCenterBundle\Terminal42NotificationCenterBundle')) {
+            $loader->load('notification_center.yaml');
+        }
+
         // $loader->load('listener.yaml');
         $rootKey = $this->getAlias();
 

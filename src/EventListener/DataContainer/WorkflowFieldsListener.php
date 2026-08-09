@@ -7,7 +7,6 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\DC_Table;
-use Contao\System;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 
@@ -19,19 +18,8 @@ class WorkflowFieldsListener
     {
         $this->workflowManager = $workflowManager;
 
-        // Ensure tl_newsletter is enabled (since it might be missing in Configuration.php)
-        try {
-            $reflection = new \ReflectionClass($workflowManager);
-            $property = $reflection->getProperty('enabledTables');
-            $enabledTables = $property->getValue($workflowManager);
-
-            if (is_array($enabledTables) && !in_array('tl_newsletter', $enabledTables, true)) {
-                $enabledTables[] = 'tl_newsletter';
-                $property->setValue($workflowManager, $enabledTables);
-            }
-        } catch (\Exception $e) {
-            // Fallback if reflection fails
-        }
+        // Ensure tl_newsletter is enabled
+        $workflowManager->addEnabledTable('tl_newsletter');
     }
 
     #[AsCallback(table: 'tl_page', target: 'fields.workflow_status.save')]
@@ -286,12 +274,6 @@ class WorkflowFieldsListener
      */
     private function resolveCallbackInstance(string $class): object
     {
-        $container = System::getContainer();
-
-        if ($container !== null && $container->has($class)) {
-            return $container->get($class);
-        }
-
         return new $class();
     }
 }

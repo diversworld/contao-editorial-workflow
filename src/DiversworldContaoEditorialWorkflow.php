@@ -14,12 +14,14 @@ declare(strict_types=1);
 
 namespace Diversworld\ContaoEditorialWorkflow;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Diversworld\ContaoEditorialWorkflow\DependencyInjection\DiversworldContaoEditorialWorkflowExtension;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
+use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
-class DiversworldContaoEditorialWorkflow extends Bundle
+class DiversworldContaoEditorialWorkflow extends AbstractBundle
 {
-    public function getPath(): string
+    public function getContainerExtension(): ?ExtensionInterface
     {
-        return \dirname(__DIR__);
+        return new DiversworldContaoEditorialWorkflowExtension();
     }
 }

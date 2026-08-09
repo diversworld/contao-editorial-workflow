@@ -14,17 +14,11 @@ declare(strict_types=1);
 
 namespace Diversworld\ContaoEditorialWorkflow\ContaoManager;
 
-use Contao\CalendarBundle\ContaoCalendarBundle;
-use Contao\ContentArticle;
 use Contao\CoreBundle\ContaoCoreBundle;
-use Contao\FaqBundle\ContaoFaqBundle;
-use Contao\NewsBundle\ContaoNewsBundle;
-use Contao\NewsletterBundle\ContaoNewsletterBundle;
 use Diversworld\ContaoEditorialWorkflow\DiversworldContaoEditorialWorkflow;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
-use Terminal42\NotificationCenterBundle\Terminal42NotificationCenterBundle;
 
 class Plugin implements BundlePluginInterface
 {
@@ -34,11 +28,11 @@ class Plugin implements BundlePluginInterface
             BundleConfig::create(DiversworldContaoEditorialWorkflow::class)
                 ->setLoadAfter([
                     ContaoCoreBundle::class,
-                    ContaoNewsBundle::class,
-                    ContaoCalendarBundle::class,
-                    ContaoFaqBundle::class,
-                    ContaoNewsletterBundle::class,
-                    Terminal42NotificationCenterBundle::class,
+                    'contao-news-bundle',
+                    'contao-calendar-bundle',
+                    'contao-faq-bundle',
+                    'contao-newsletter-bundle',
+                    'notification-center',
                 ]),
         ];
     }

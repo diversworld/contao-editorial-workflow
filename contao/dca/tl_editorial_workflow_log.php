@@ -126,7 +126,6 @@ class tl_editorial_workflow_log extends Backend
     public function colorize($row, $label)
     {
         $class = 'ellipsis';
-        dump($row);
         switch ($row['action']) {
             case 'CONFIGURATION':
             case 'REPOSITORY':

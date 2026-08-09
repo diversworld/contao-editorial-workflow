@@ -1,0 +1,41 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Notification Types
+    diversworld.contao_editorial_workflow.notification.status_change:
+        class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
+        arguments:
+            $name: 'workflow_status_change'
+        tags:
+            - { name: notification_center.notification_type }
+
+    diversworld.contao_editorial_workflow.notification.review_requested:
+        class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
+        arguments:
+            $name: 'workflow_review_requested'
+        tags:
+            - { name: notification_center.notification_type }
+
+    diversworld.contao_editorial_workflow.notification.approved:
+        class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
+        arguments:
+            $name: 'workflow_approved'
+        tags:
+            - { name: notification_center.notification_type }
+
+    diversworld.contao_editorial_workflow.notification.rejected:
+        class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
+        arguments:
+            $name: 'workflow_rejected'
+        tags:
+            - { name: notification_center.notification_type }
+
+    diversworld.contao_editorial_workflow.notification.published:
+        class: Diversworld\ContaoEditorialWorkflow\NotificationCenter\WorkflowNotificationType
+        arguments:
+            $name: 'workflow_published'
+        tags:
+            - { name: notification_center.notification_type }

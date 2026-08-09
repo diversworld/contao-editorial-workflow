@@ -5,6 +5,7 @@ namespace Diversworld\ContaoEditorialWorkflow\Workflow;
 use Contao\BackendUser;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ArrayParameterType;
 use Symfony\Bundle\SecurityBundle\Security;
 use Terminal42\NotificationCenterBundle\NotificationCenter;
 use Contao\StringUtil;
@@ -26,10 +27,10 @@ class WorkflowManager
         ContaoFramework $framework,
         Connection      $db,
         Security        $security,
-        NotificationCenter $notificationCenter,
         RequestStack    $requestStack,
         bool            $fourEyesPrinciple,
-        array           $enabledTables
+        array           $enabledTables,
+        ?object         $notificationCenter = null
     )
     {
         $this->framework = $framework;
@@ -193,7 +194,7 @@ class WorkflowManager
         $groupRows = $this->db->fetchAllAssociative(
             'SELECT editorial_workflow_permissions FROM tl_user_group WHERE id IN (?) AND disable != ? AND (start = ? OR start <= ?) AND (stop = ? OR stop > ?)',
             [$groups, '1', '', $time, '', $time],
-            [Connection::PARAM_INT_ARRAY]
+            [ArrayParameterType::INTEGER]
         );
 
         foreach ($groupRows as $group) {
@@ -216,6 +217,13 @@ class WorkflowManager
     public function isEnabledWorkflowTable(string $table): bool
     {
         return in_array($table, $this->enabledTables, true) && preg_match('/^tl_[a-z0-9_]+$/', $table) === 1;
+    }
+
+    public function addEnabledTable(string $table): void
+    {
+        if (!in_array($table, $this->enabledTables, true)) {
+            $this->enabledTables[] = $table;
+        }
     }
 
     private function tableHasColumn(string $table, string $column): bool
@@ -281,6 +289,10 @@ class WorkflowManager
 
     private function dispatchNotifications($table, $id, $fromStatus, $toStatus, $comment, $userId): void
     {
+        if ($this->notificationCenter === null || !method_exists($this->notificationCenter, 'sendNotification')) {
+            return;
+        }
+
         $notificationType = 'workflow_status_change';
 
         if ($toStatus === WorkflowStatus::STATUS_REVIEW) {
@@ -373,14 +385,18 @@ class WorkflowManager
 
         // Benachrichtigungen versenden
         foreach ($notificationIds as $nid => $uids) {
-            // Prüfen ob die Benachrichtigung vom richtigen Typ ist
-            $type = $this->db->fetchOne("SELECT type FROM tl_nc_notification WHERE id = ?", [$nid]);
-            if ($type === $notificationType) {
-                // Hier könnten wir theoretisch an spezifische Empfänger filtern,
-                // aber NC sendet meist an die in der Nachricht konfigurierten Adressen.
-                // Wir übergeben die Empfänger-IDs als Token, falls das NC-Gateways das unterstützen.
-                $tokens['recipient_ids'] = implode(',', array_unique($uids));
-                $this->notificationCenter->sendNotification($nid, $tokens);
+            try {
+                // Prüfen ob die Benachrichtigung vom richtigen Typ ist
+                $type = $this->db->fetchOne("SELECT type FROM tl_nc_notification WHERE id = ?", [$nid]);
+                if ($type === $notificationType) {
+                    // Hier könnten wir theoretisch an spezifische Empfänger filtern,
+                    // aber NC sendet meist an die in der Nachricht konfigurierten Adressen.
+                    // Wir übergeben die Empfänger-IDs als Token, falls das NC-Gateways das unterstützen.
+                    $tokens['recipient_ids'] = implode(',', array_unique($uids));
+                    $this->notificationCenter->sendNotification($nid, $tokens);
+                }
+            } catch (\Exception $e) {
+                // Ignorieren falls Tabelle nicht existiert o.ä.
             }
         }
     }
@@ -397,7 +413,7 @@ class WorkflowManager
         return '';
     }
 
-    private function getDateFormat(string $column): string
+    public function getDateFormat(string $column): string
     {
         if (!$this->framework->isInitialized()) {
             return 'Y-m-d H:i:s';
@@ -406,9 +422,9 @@ class WorkflowManager
         $config = $this->framework->getAdapter(Config::class);
 
         return match ($column) {
-            'date', 'startDate', 'endDate' => $config->get('dateFormat') ?: 'Y-m-d',
-            'time', 'startTime', 'endTime' => $config->get('timeFormat') ?: 'H:i',
-            default => $config->get('datimFormat') ?: 'Y-m-d H:i',
+            'date', 'startDate', 'endDate' => (string)$config->get('dateFormat') ?: 'Y-m-d',
+            'time', 'startTime', 'endTime' => (string)$config->get('timeFormat') ?: 'H:i',
+            default => (string)$config->get('datimFormat') ?: 'Y-m-d H:i',
         };
     }
 }

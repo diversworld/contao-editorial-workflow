@@ -22,8 +22,11 @@
         "source": "https://github.com/diversworld/contao-editorial-workflow"
     },
     "require": {
-        "php": "^8.2",
-        "contao/core-bundle": "^5.3"
+        "php": "^8.3",
+        "contao/core-bundle": "^5.7 || ^6.0"
+    },
+    "suggest": {
+        "terminal42/notification_center": "For email notifications on workflow status changes"
     },
     "require-dev": {
         "contao/easy-coding-standard": "^6.13",

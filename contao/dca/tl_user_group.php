@@ -38,7 +38,12 @@ $GLOBALS['TL_DCA']['tl_user_group']['fields']['editorial_workflow_notifications'
     'sql' => "blob NULL",
 ];
 
+$fields = ['editorial_workflow_permissions'];
+if (class_exists('Terminal42\NotificationCenterBundle\Terminal42NotificationCenterBundle')) {
+    $fields[] = 'editorial_workflow_notifications';
+}
+
 PaletteManipulator::create()
     ->addLegend('editorial_workflow_legend', 'pagemounts_legend', PaletteManipulator::POSITION_AFTER)
-    ->addField(['editorial_workflow_permissions', 'editorial_workflow_notifications'], 'editorial_workflow_legend', PaletteManipulator::POSITION_APPEND)
+    ->addField($fields, 'editorial_workflow_legend', PaletteManipulator::POSITION_APPEND)
     ->applyToPalette('default', 'tl_user_group');
