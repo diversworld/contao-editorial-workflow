@@ -23,15 +23,24 @@ $GLOBALS['TL_DCA']['tl_newsletter']['fields']['workflow_comment'] = [
     'sql' => "text NULL",
 ];
 
+if (isset($GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback'])) {
+    $GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback_orig'] = $GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback'];
+}
 $GLOBALS['TL_DCA']['tl_newsletter']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
 $GLOBALS['TL_DCA']['tl_newsletter']['list']['operations']['send']['button_callback'] = [WorkflowApprovalsModule::class, 'checkSendPermission'];
 
-$manipulator = PaletteManipulator::create()
-    ->addLegend('workflow_legend', 'title_legend', PaletteManipulator::POSITION_AFTER)
-    ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
+$palettes = $GLOBALS['TL_DCA']['tl_newsletter']['palettes'] ?? null;
 
-foreach ($GLOBALS['TL_DCA']['tl_newsletter']['palettes'] as $name => $palette) {
-    if ($name === '__selector__') continue;
-    $manipulator->applyToPalette($name, 'tl_newsletter');
+if (is_array($palettes)) {
+    $manipulator = PaletteManipulator::create()
+        ->addLegend('workflow_legend', 'title_legend', PaletteManipulator::POSITION_AFTER)
+        ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
+
+    foreach ($palettes as $name => $palette) {
+        if ($name === '__selector__') {
+            continue;
+        }
+        $manipulator->applyToPalette($name, 'tl_newsletter');
+    }
 }
 

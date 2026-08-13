@@ -83,10 +83,27 @@ class WorkflowFieldsListener
     #[AsCallback(table: 'tl_newsletter', target: 'list.label.label')]
     #[AsCallback(table: 'tl_news', target: 'list.label.label')]
     #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label')]
-    public function onLabel($row, $label, DataContainer $dc, $args = null): array|string
+    public function onLabel($row, $label, DataContainer $dc, ...$args): array|string
     {
+        // First append status to the label string/array
+        $label = $this->appendStatusToLabel($label, $row);
+
+        $label_callback_orig_called = false;
+
+        // Call original callback if exists
+        if (isset($GLOBALS['TL_DCA'][$dc->table]['list']['label']['label_callback_orig'])) {
+            $callback = $GLOBALS['TL_DCA'][$dc->table]['list']['label']['label_callback_orig'];
+            $params = array_merge([$row, $label, $dc], $args);
+            $res = $this->executeCallback($callback, $params);
+
+            if (!empty($res)) {
+                $label = $res;
+                $label_callback_orig_called = true;
+            }
+        }
+
         // Newsletter hat eine spezielle Logik, um das Original-Label zu generieren
-        if ($dc->table === 'tl_newsletter' && class_exists('tl_newsletter')) {
+        if (!$label_callback_orig_called && $dc->table === 'tl_newsletter' && class_exists('tl_newsletter')) {
             $newsletter = new \tl_newsletter();
             if (method_exists($newsletter, 'listNewsletters')) {
                 $label = $newsletter->listNewsletters($row);
@@ -94,7 +111,7 @@ class WorkflowFieldsListener
         }
 
         // News hat eine spezielle Logik
-        if ($dc->table === 'tl_news') {
+        if (!$label_callback_orig_called && $dc->table === 'tl_news') {
             if (class_exists('tl_news')) {
                 $news = new \tl_news();
                 if (method_exists($news, 'addNews')) {
@@ -111,7 +128,7 @@ class WorkflowFieldsListener
         }
 
         // Kalender hat eine spezielle Logik
-        if ($dc->table === 'tl_calendar_events') {
+        if (!$label_callback_orig_called && $dc->table === 'tl_calendar_events') {
             if (class_exists('tl_calendar_events')) {
                 $events = new \tl_calendar_events();
                 if (method_exists($events, 'listEvents')) {
@@ -127,14 +144,14 @@ class WorkflowFieldsListener
         }
 
         // FAQ hat eine spezielle Logik
-        if ($dc->table === 'tl_faq' && class_exists('tl_faq')) {
+        if (!$label_callback_orig_called && $dc->table === 'tl_faq' && class_exists('tl_faq')) {
             $faq = new \tl_faq();
             if (method_exists($faq, 'listQuestions')) {
                 $label = $faq->listQuestions($row, $label, $dc, $args);
             }
         }
 
-        return $this->appendStatusToLabel($label, $row);
+        return $label;
     }
 
     #[AsCallback(table: 'tl_article', target: 'list.sorting.child_record')]
@@ -241,7 +258,7 @@ class WorkflowFieldsListener
         return $label;
     }
 
-    private function executeCallback($callback, array $args): string
+    private function executeCallback($callback, array $args): array|string
     {
         if (is_array($callback)) {
             if (is_string($callback[0])) {
@@ -249,19 +266,19 @@ class WorkflowFieldsListener
 
                 // Reflection to handle varied argument counts if needed,
                 // but for now we just pass what we have.
-                return (string)call_user_func_array([$instance, $callback[1]], $args);
+                return call_user_func_array([$instance, $callback[1]], $args);
             }
-            return (string)call_user_func_array([$callback[0], $callback[1]], $args);
+            return call_user_func_array([$callback[0], $callback[1]], $args);
         }
 
         if (is_string($callback)) {
             // Invokable service callback (e.g. a class registered via #[AsCallback])
             $instance = $this->resolveCallbackInstance($callback);
-            return (string)call_user_func_array($instance, $args);
+            return call_user_func_array($instance, $args);
         }
 
         if (is_callable($callback)) {
-            return (string)call_user_func_array($callback, $args);
+            return call_user_func_array($callback, $args);
         }
 
         return '';

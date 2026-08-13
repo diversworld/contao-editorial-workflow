@@ -26,11 +26,17 @@ if (isset($GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_call
 }
 $GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onChildRecord'];
 
-$manipulator = PaletteManipulator::create()
-    ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
-    ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
+$palettes = $GLOBALS['TL_DCA']['tl_article']['palettes'] ?? null;
 
-foreach ($GLOBALS['TL_DCA']['tl_article']['palettes'] as $name => $palette) {
-    if ($name === '__selector__') continue;
-    $manipulator->applyToPalette($name, 'tl_article');
+if (is_array($palettes)) {
+    $manipulator = PaletteManipulator::create()
+        ->addLegend('workflow_legend', 'publish_legend', PaletteManipulator::POSITION_BEFORE)
+        ->addField(['workflow_status', 'workflow_comment'], 'workflow_legend', PaletteManipulator::POSITION_APPEND);
+
+    foreach ($palettes as $name => $palette) {
+        if ($name === '__selector__') {
+            continue;
+        }
+        $manipulator->applyToPalette($name, 'tl_article');
+    }
 }

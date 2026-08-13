@@ -43,7 +43,14 @@ if (class_exists('Terminal42\NotificationCenterBundle\Terminal42NotificationCent
     $fields[] = 'editorial_workflow_notifications';
 }
 
-PaletteManipulator::create()
-    ->addLegend('editorial_workflow_legend', 'pagemounts_legend', PaletteManipulator::POSITION_AFTER)
-    ->addField($fields, 'editorial_workflow_legend', PaletteManipulator::POSITION_APPEND)
-    ->applyToPalette('default', 'tl_user_group');
+$palettes = $GLOBALS['TL_DCA']['tl_user_group']['palettes'] ?? null;
+
+if (is_array($palettes)) {
+    $manipulator = PaletteManipulator::create()
+        ->addLegend('editorial_workflow_legend', 'pagemounts_legend', PaletteManipulator::POSITION_AFTER)
+        ->addField($fields, 'editorial_workflow_legend', PaletteManipulator::POSITION_APPEND);
+
+    if (isset($palettes['default'])) {
+        $manipulator->applyToPalette('default', 'tl_user_group');
+    }
+}
