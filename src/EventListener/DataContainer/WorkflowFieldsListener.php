@@ -9,12 +9,17 @@ use Contao\Date;
 use Contao\DC_Table;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
+use ReflectionClass;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class WorkflowFieldsListener
 {
     private $workflowManager;
 
-    public function __construct(WorkflowManager $workflowManager)
+    public function __construct(
+        WorkflowManager $workflowManager,
+        private readonly ContainerInterface $container,
+    )
     {
         $this->workflowManager = $workflowManager;
 
@@ -264,8 +269,10 @@ class WorkflowFieldsListener
             if (is_string($callback[0])) {
                 $instance = $this->resolveCallbackInstance($callback[0]);
 
-                // Reflection to handle varied argument counts if needed,
-                // but for now we just pass what we have.
+                if ($instance === null) {
+                    return '';
+                }
+
                 return call_user_func_array([$instance, $callback[1]], $args);
             }
             return call_user_func_array([$callback[0], $callback[1]], $args);
@@ -274,6 +281,11 @@ class WorkflowFieldsListener
         if (is_string($callback)) {
             // Invokable service callback (e.g. a class registered via #[AsCallback])
             $instance = $this->resolveCallbackInstance($callback);
+
+            if ($instance === null) {
+                return '';
+            }
+
             return call_user_func_array($instance, $args);
         }
 
@@ -289,8 +301,28 @@ class WorkflowFieldsListener
      * services registered via #[AsCallback] that have constructor dependencies)
      * or by instantiating it directly as a fallback.
      */
-    private function resolveCallbackInstance(string $class): object
+    private function resolveCallbackInstance(string $class): ?object
     {
-        return new $class();
+        // Modern Contao callbacks are services and often have constructor
+        // dependencies. Always let Symfony create them when they are available.
+        if ($this->container->has($class)) {
+            return $this->container->get($class);
+        }
+
+        // Keep supporting legacy callback classes without dependencies. If an
+        // optional extension is absent (or does not expose its callback as a
+        // service), the caller will use the regular label fallback instead.
+        if (!class_exists($class)) {
+            return null;
+        }
+
+        $reflection = new ReflectionClass($class);
+        $constructor = $reflection->getConstructor();
+
+        if (!$reflection->isInstantiable() || ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0)) {
+            return null;
+        }
+
+        return $reflection->newInstance();
     }
 }

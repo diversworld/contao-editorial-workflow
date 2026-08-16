@@ -8,6 +8,7 @@ services:
             $fourEyesPrinciple: '%diversworld_contao_editorial_workflow.four_eyes_principle%'
             $enabledTables: '%diversworld_contao_editorial_workflow.enabled_tables%'
             $csrfTokenName: '%contao.csrf_token_name%'
+            $container: '@service_container'
 
     Diversworld\ContaoEditorialWorkflow\:
         resource: ../src/
