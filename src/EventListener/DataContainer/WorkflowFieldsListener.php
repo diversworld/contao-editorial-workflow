@@ -126,7 +126,7 @@ class WorkflowFieldsListener
             if ($label === '' || $label === $row['headline']) {
                 $date = Date::parse(Config::get('datimFormat'), $row['date']);
                 $time = Date::parse(Config::get('timeFormat'), $row['time']);
-                $label = sprintf('%s <span class="label-info"\>[%s %s]</span>', $row['headline'], $date, $time);
+                $label = sprintf('%s <span class="label-info">[%s %s]</span>', $row['headline'], $date, $time);
             }
         }
 
@@ -142,7 +142,7 @@ class WorkflowFieldsListener
             // Fallback für Contao 5+, falls tl_calendar_events nicht existiert oder listEvents fehlschlägt
             if ($label === '' || $label === $row['title']) {
                 $date = Date::parse(Config::get('dateFormat'), $row['startTime']);
-                $label = sprintf('%s  \<span class="label-info" \>[%s] \</span \>', $row['title'], $date);
+                $label = sprintf('%s  <span class="label-info" >[%s] </span >', $row['title'], $date);
             }
         }
 
