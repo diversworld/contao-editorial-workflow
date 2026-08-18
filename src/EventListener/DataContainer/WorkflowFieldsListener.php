@@ -90,15 +90,13 @@ class WorkflowFieldsListener
     #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label')]
     public function onLabel($row, $label, DataContainer $dc, ...$args): array|string
     {
-        // First append status to the label string/array
-        $label = $this->appendStatusToLabel($label, $row);
-
         $label_callback_orig_called = false;
 
         // Call original callback if exists
         if (isset($GLOBALS['TL_DCA'][$dc->table]['list']['label']['label_callback_orig'])) {
             $callback = $GLOBALS['TL_DCA'][$dc->table]['list']['label']['label_callback_orig'];
             $params = array_merge([$row, $label, $dc], $args);
+
             $res = $this->executeCallback($callback, $params);
 
             if (!empty($res)) {
@@ -128,7 +126,7 @@ class WorkflowFieldsListener
             if ($label === '' || $label === $row['headline']) {
                 $date = Date::parse(Config::get('datimFormat'), $row['date']);
                 $time = Date::parse(Config::get('timeFormat'), $row['time']);
-                $label = sprintf('%s <span class="label-info">[%s %s]</span>', $row['headline'], $date, $time);
+                $label = sprintf('%s <span class="label-info"\>[%s %s]</span>', $row['headline'], $date, $time);
             }
         }
 
@@ -144,7 +142,7 @@ class WorkflowFieldsListener
             // Fallback für Contao 5+, falls tl_calendar_events nicht existiert oder listEvents fehlschlägt
             if ($label === '' || $label === $row['title']) {
                 $date = Date::parse(Config::get('dateFormat'), $row['startTime']);
-                $label = sprintf('%s <span class="label-info">[%s]</span>', $row['title'], $date);
+                $label = sprintf('%s  \<span class="label-info" \>[%s] \</span \>', $row['title'], $date);
             }
         }
 
@@ -156,7 +154,12 @@ class WorkflowFieldsListener
             }
         }
 
-        return $label;
+        // The original callback must finish the label first. This is
+        // especially important for tl_page: Contao adds the page icon, link
+        // and optional record ID there, and the exact markup differs between
+        // Contao versions. Appending the workflow status afterwards preserves
+        // the complete native label in both Contao 5.7 and 6.
+        return $this->appendStatusToLabel($label, $row);
     }
 
     #[AsCallback(table: 'tl_article', target: 'list.sorting.child_record')]
@@ -252,7 +255,7 @@ class WorkflowFieldsListener
         }
 
         $statusLabel = $GLOBALS['TL_LANG']['MSC']['workflow_status_ref'][$status] ?? $status;
-        $statusHtml = sprintf(' <span style="color:#999;padding-left:3px">[%s]</span>', $statusLabel);
+        $statusHtml = sprintf(' <span class="tl_gray">[%s]</span>', $statusLabel);
 
         if (is_array($label)) {
             $label[0] .= $statusHtml;
