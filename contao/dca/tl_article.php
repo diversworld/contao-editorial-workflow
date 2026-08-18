@@ -1,5 +1,6 @@
 <?php
 
+use Composer\InstalledVersions;
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
@@ -21,10 +22,23 @@ $GLOBALS['TL_DCA']['tl_article']['fields']['workflow_comment'] = [
     'sql'       => "text NULL",
 ];
 
-if (isset($GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'])) {
-    $GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback_orig'] = $GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'];
+$contaoVersion = InstalledVersions::getVersion('contao/core-bundle') ?? '0';
+$contaoMajorVersion = (int) strtok($contaoVersion, '.');
+$isContao6 = $contaoMajorVersion >= 6;
+
+if ($isContao6) {
+    if (isset($GLOBALS['TL_DCA']['tl_article']['list']['label']['label_callback'])) {
+        $GLOBALS['TL_DCA']['tl_article']['list']['label']['label_callback_orig'] = $GLOBALS['TL_DCA']['tl_article']['list']['label']['label_callback'];
+    }
+
+    $GLOBALS['TL_DCA']['tl_article']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
+} else {
+    if (isset($GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'])) {
+        $GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback_orig'] = $GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'];
+    }
+
+    $GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onChildRecord'];
 }
-$GLOBALS['TL_DCA']['tl_article']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onChildRecord'];
 
 $palettes = $GLOBALS['TL_DCA']['tl_article']['palettes'] ?? null;
 

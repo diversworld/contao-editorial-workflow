@@ -7,6 +7,7 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\DC_Table;
+use Contao\System;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;
 use ReflectionClass;
@@ -84,11 +85,11 @@ class WorkflowFieldsListener
         return array_unique($options);
     }
 
-    #[AsCallback(table: 'tl_page', target: 'list.label.label')]
-    #[AsCallback(table: 'tl_newsletter', target: 'list.label.label')]
-    #[AsCallback(table: 'tl_news', target: 'list.label.label')]
-    #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label')]
-    public function onLabel($row, $label, DataContainer $dc, ...$args): array|string
+    #[AsCallback(table: 'tl_page', target: 'list.label.label_callback')]
+    #[AsCallback(table: 'tl_newsletter', target: 'list.label.label_callback')]
+    #[AsCallback(table: 'tl_news', target: 'list.label.label_callback')]
+    #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label_callback')]
+    public function onLabel($row, $label, DataContainer $dc, ...$args): array|object|string
     {
         $label_callback_orig_called = false;
 
@@ -159,7 +160,7 @@ class WorkflowFieldsListener
         // and optional record ID there, and the exact markup differs between
         // Contao versions. Appending the workflow status afterwards preserves
         // the complete native label in both Contao 5.7 and 6.
-        return $this->appendStatusToLabel($label, $row);
+        return $this->normalizeLabelForContao($this->appendStatusToLabel($label, $row));
     }
 
     #[AsCallback(table: 'tl_article', target: 'list.sorting.child_record')]
@@ -207,15 +208,18 @@ class WorkflowFieldsListener
             } else {
                 $label = $this->executeCallback($callback, [$row, $dc]);
             }
-        } elseif (isset($GLOBALS['TL_DCA'][$table]['list']['label']['label_callback']) && $table !== 'tl_article') {
+        } elseif (isset($GLOBALS['TL_DCA'][$table]['list']['label']['label_callback'])) {
             $callback = $GLOBALS['TL_DCA'][$table]['list']['label']['label_callback'];
+            $baseLabel = $this->buildConfiguredLabel($row, $table);
 
             // Special handling for callbacks that expect standard label_callback arguments:
             // ($row, $label, DataContainer $dc, $args)
-            if ($table === 'tl_calendar_events') {
-                $label = $this->executeCallback($callback, [$row, '', $dc, []]);
+            if ($table === 'tl_article') {
+                $label = $this->executeCallback($callback, [$row, $baseLabel]);
+            } elseif ($table === 'tl_calendar_events') {
+                $label = $this->executeCallback($callback, [$row, $baseLabel, $dc, []]);
             } else {
-                $label = $this->executeCallback($callback, [$row, '', $dc, null]);
+                $label = $this->executeCallback($callback, [$row, $baseLabel, $dc, null]);
             }
         }
 
@@ -243,10 +247,10 @@ class WorkflowFieldsListener
             }
         }
 
-        return $this->appendStatusToLabel($label, $row);
+        return $this->renderChildRecordLabel($this->appendStatusToLabel($label, $row));
     }
 
-    private function appendStatusToLabel($label, array $row): string|array
+    private function appendStatusToLabel($label, array $row): array|object|string
     {
         $status = $row['workflow_status'] ?? WorkflowStatus::STATUS_DRAFT;
 
@@ -259,17 +263,48 @@ class WorkflowFieldsListener
 
         if (is_array($label)) {
             $label[0] .= $statusHtml;
-        } else {
+            return $label;
+        }
+
+        $recordLabelClass = 'Contao\CoreBundle\DataContainer\RecordLabel';
+
+        if (\is_object($label) && class_exists($recordLabelClass) && $label instanceof $recordLabelClass) {
+            $label->label = trim(sprintf('%s [%s]', $label->label, $statusLabel));
+
+            if (null !== $label->htmlLabel) {
+                $label->htmlLabel .= $statusHtml;
+            }
+
+            if (\is_array($label->columns) && isset($label->columns[0])) {
+                $label->columns[0] = trim(sprintf('%s [%s]', $label->columns[0], $statusLabel));
+            }
+
+            if (\is_array($label->htmlColumns) && isset($label->htmlColumns[0])) {
+                $label->htmlColumns[0] .= $statusHtml;
+            }
+
+            return $label;
+        }
+
+        if (\is_object($label)) {
+            return $label;
+        }
+
+        if (\is_string($label)) {
             $label .= $statusHtml;
         }
 
         return $label;
     }
 
-    private function executeCallback($callback, array $args): array|string
+    private function executeCallback($callback, array $args): array|object|string
     {
         if (is_array($callback)) {
             if (is_string($callback[0])) {
+                if (!str_contains($callback[0], '\\') && class_exists($callback[0])) {
+                    return call_user_func_array([System::importStatic($callback[0]), $callback[1]], $args);
+                }
+
                 $instance = $this->resolveCallbackInstance($callback[0]);
 
                 if ($instance === null) {
@@ -297,6 +332,101 @@ class WorkflowFieldsListener
         }
 
         return '';
+    }
+
+    private function normalizeLabelForContao(array|object|string $label): array|object|string
+    {
+        $recordLabelClass = 'Contao\CoreBundle\DataContainer\RecordLabel';
+
+        if (!class_exists($recordLabelClass) || \is_object($label)) {
+            return $label;
+        }
+
+        if (\is_array($label)) {
+            $htmlLabel = $label[0] ?? '';
+
+            if (!\is_string($htmlLabel) || !$this->containsHtml($htmlLabel)) {
+                return $label;
+            }
+
+            $recordLabel = $recordLabelClass::fromHtml($htmlLabel);
+            $recordLabel->htmlPreview = isset($label[1]) && \is_string($label[1]) ? $label[1] : null;
+            $recordLabel->state = isset($label[2]) && \is_string($label[2]) ? $label[2] : null;
+
+            return $recordLabel;
+        }
+
+        if (\is_string($label) && $this->containsHtml($label)) {
+            return $recordLabelClass::fromHtml($label);
+        }
+
+        return $label;
+    }
+
+    private function renderChildRecordLabel(array|object|string $label): string
+    {
+        $recordLabelClass = 'Contao\CoreBundle\DataContainer\RecordLabel';
+
+        if (\is_object($label) && class_exists($recordLabelClass) && $label instanceof $recordLabelClass) {
+            if (null !== $label->htmlLabel) {
+                return $label->htmlLabel;
+            }
+
+            if (\is_array($label->htmlColumns)) {
+                return implode(' ', $label->htmlColumns);
+            }
+
+            if (\is_array($label->columns)) {
+                return implode(' ', $label->columns);
+            }
+
+            return $label->label;
+        }
+
+        if (\is_array($label)) {
+            return implode(' ', $label);
+        }
+
+        return $label;
+    }
+
+    private function buildConfiguredLabel(array $row, string $table): string
+    {
+        $labelConfig = $GLOBALS['TL_DCA'][$table]['list']['label'] ?? null;
+
+        if (!\is_array($labelConfig) || empty($labelConfig['fields']) || !\is_array($labelConfig['fields'])) {
+            return $row['title'] ?? $row['headline'] ?? '';
+        }
+
+        $values = [];
+
+        foreach ($labelConfig['fields'] as $field) {
+            $fieldName = explode(':', (string) $field, 2)[0];
+            $values[] = $this->formatLabelFieldValue($table, $fieldName, $row);
+        }
+
+        return vsprintf($labelConfig['format'] ?? '%s', $values);
+    }
+
+    private function formatLabelFieldValue(string $table, string $field, array $row): string
+    {
+        $value = $row[$field] ?? '';
+        $fieldConfig = $GLOBALS['TL_DCA'][$table]['fields'][$field] ?? null;
+
+        if (\is_array($fieldConfig) && isset($fieldConfig['reference']) && \is_array($fieldConfig['reference'])) {
+            $value = $fieldConfig['reference'][$value] ?? $value;
+        }
+
+        if (!\is_scalar($value)) {
+            return '';
+        }
+
+        return (string) $value;
+    }
+
+    private function containsHtml(string $label): bool
+    {
+        return $label !== strip_tags($label);
     }
 
     /**
