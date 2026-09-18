@@ -23,7 +23,7 @@ $GLOBALS['TL_DCA']['tl_article']['fields']['workflow_comment'] = [
 ];
 
 $contaoVersion = InstalledVersions::getVersion('contao/core-bundle') ?? '0';
-$contaoMajorVersion = (int) strtok($contaoVersion, '.');
+$contaoMajorVersion = (int)strtok($contaoVersion, '.');
 $isContao6 = $contaoMajorVersion >= 6;
 
 if ($isContao6) {

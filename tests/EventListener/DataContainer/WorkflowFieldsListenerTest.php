@@ -32,6 +32,7 @@ PHP);
 }
 
 namespace Diversworld\ContaoEditorialWorkflow\Tests\EventListener\DataContainer {
+
     use Diversworld\ContaoEditorialWorkflow\EventListener\DataContainer\WorkflowFieldsListener;
     use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
     use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowStatus;

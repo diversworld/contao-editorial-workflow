@@ -401,7 +401,7 @@ class WorkflowFieldsListener
         $values = [];
 
         foreach ($labelConfig['fields'] as $field) {
-            $fieldName = explode(':', (string) $field, 2)[0];
+            $fieldName = explode(':', (string)$field, 2)[0];
             $values[] = $this->formatLabelFieldValue($table, $fieldName, $row);
         }
 
@@ -421,7 +421,7 @@ class WorkflowFieldsListener
             return '';
         }
 
-        return (string) $value;
+        return (string)$value;
     }
 
     private function containsHtml(string $label): bool
