@@ -115,11 +115,11 @@ class WorkflowFieldsListener
         if (!$label_callback_orig_called && $dc->table === 'tl_page' && class_exists('tl_page')) {
             $imageAttribute = $args[0] ?? '';
             if (\is_array($imageAttribute) && class_exists('Contao\CoreBundle\String\HtmlAttributes')) {
-                $imageAttribute = (string) new \Contao\CoreBundle\String\HtmlAttributes($imageAttribute);
+                $imageAttribute = (string)new \Contao\CoreBundle\String\HtmlAttributes($imageAttribute);
             }
-            $blnReturnImage = (bool) ($args[1] ?? false);
-            $blnProtected = (bool) ($args[2] ?? false);
-            $isVisibleRootTrailPage = (bool) ($args[3] ?? false);
+            $blnReturnImage = (bool)($args[1] ?? false);
+            $blnProtected = (bool)($args[2] ?? false);
+            $isVisibleRootTrailPage = (bool)($args[3] ?? false);
 
             $page = new \tl_page();
             if (method_exists($page, 'addIcon')) {
@@ -132,10 +132,10 @@ class WorkflowFieldsListener
         if (!$label_callback_orig_called && $dc->table === 'tl_article' && class_exists('tl_article')) {
             $imageAttribute = $args[0] ?? '';
             if (\is_array($imageAttribute) && class_exists('Contao\CoreBundle\String\HtmlAttributes')) {
-                $imageAttribute = (string) new \Contao\CoreBundle\String\HtmlAttributes($imageAttribute);
+                $imageAttribute = (string)new \Contao\CoreBundle\String\HtmlAttributes($imageAttribute);
             }
-            $blnReturnImage = (bool) ($args[1] ?? false);
-            $blnProtected = (bool) ($args[2] ?? false);
+            $blnReturnImage = (bool)($args[1] ?? false);
+            $blnProtected = (bool)($args[2] ?? false);
 
             $article = new \tl_article();
             if (method_exists($article, 'addIcon')) {
