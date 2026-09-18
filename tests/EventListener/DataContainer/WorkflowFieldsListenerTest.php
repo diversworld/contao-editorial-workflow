@@ -129,6 +129,18 @@ namespace Diversworld\ContaoEditorialWorkflow\Tests\EventListener\DataContainer 
             $this->assertSame('Home <span class="label-info">[Hauptspalte] (ID: 117)</span>', $label);
         }
 
+        public function testDoesNotAppendStatusWhenPublished(): void
+        {
+            $listener = $this->createListener();
+
+            $label = $this->invokePrivateMethod($listener, 'appendStatusToLabel', [
+                'Published page',
+                ['workflow_status' => WorkflowStatus::STATUS_PUBLISHED],
+            ]);
+
+            $this->assertSame('Published page', $label);
+        }
+
         private function createListener(): WorkflowFieldsListener
         {
             $workflowManager = $this->createMock(WorkflowManager::class);

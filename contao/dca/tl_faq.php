@@ -27,6 +27,11 @@ if (isset($GLOBALS['TL_DCA']['tl_faq']['list']['sorting']['child_record_callback
 }
 $GLOBALS['TL_DCA']['tl_faq']['list']['sorting']['child_record_callback'] = [WorkflowFieldsListener::class, 'onFaqChildRecord'];
 
+if (isset($GLOBALS['TL_DCA']['tl_faq']['list']['label']['label_callback'])) {
+    $GLOBALS['TL_DCA']['tl_faq']['list']['label']['label_callback_orig'] = $GLOBALS['TL_DCA']['tl_faq']['list']['label']['label_callback'];
+}
+$GLOBALS['TL_DCA']['tl_faq']['list']['label']['label_callback'] = [WorkflowFieldsListener::class, 'onLabel'];
+
 $palettes = $GLOBALS['TL_DCA']['tl_faq']['palettes'] ?? null;
 
 if (is_array($palettes)) {

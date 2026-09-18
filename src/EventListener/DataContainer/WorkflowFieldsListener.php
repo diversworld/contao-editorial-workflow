@@ -86,22 +86,60 @@ class WorkflowFieldsListener
     }
 
     #[AsCallback(table: 'tl_page', target: 'list.label.label_callback')]
+    #[AsCallback(table: 'tl_article', target: 'list.label.label_callback')]
     #[AsCallback(table: 'tl_newsletter', target: 'list.label.label_callback')]
     #[AsCallback(table: 'tl_news', target: 'list.label.label_callback')]
     #[AsCallback(table: 'tl_calendar_events', target: 'list.label.label_callback')]
+    #[AsCallback(table: 'tl_faq', target: 'list.label.label_callback')]
     public function onLabel($row, $label, DataContainer $dc, ...$args): array|object|string
     {
         $label_callback_orig_called = false;
 
-        // Call original callback if exists
+        // Call original callback if exists and not self
         if (isset($GLOBALS['TL_DCA'][$dc->table]['list']['label']['label_callback_orig'])) {
             $callback = $GLOBALS['TL_DCA'][$dc->table]['list']['label']['label_callback_orig'];
-            $params = array_merge([$row, $label, $dc], $args);
 
-            $res = $this->executeCallback($callback, $params);
+            if ($callback !== [self::class, 'onLabel'] && $callback !== [static::class, 'onLabel']) {
+                $params = array_merge([$row, $label, $dc], $args);
 
-            if (!empty($res)) {
-                $label = $res;
+                $res = $this->executeCallback($callback, $params);
+
+                if (!empty($res)) {
+                    $label = $res;
+                    $label_callback_orig_called = true;
+                }
+            }
+        }
+
+        // tl_page Fallback (Strukturansicht)
+        if (!$label_callback_orig_called && $dc->table === 'tl_page' && class_exists('tl_page')) {
+            $imageAttribute = $args[0] ?? '';
+            if (\is_array($imageAttribute) && class_exists('Contao\CoreBundle\String\HtmlAttributes')) {
+                $imageAttribute = (string) new \Contao\CoreBundle\String\HtmlAttributes($imageAttribute);
+            }
+            $blnReturnImage = (bool) ($args[1] ?? false);
+            $blnProtected = (bool) ($args[2] ?? false);
+            $isVisibleRootTrailPage = (bool) ($args[3] ?? false);
+
+            $page = new \tl_page();
+            if (method_exists($page, 'addIcon')) {
+                $label = $page->addIcon($row, $label, $dc, $imageAttribute, $blnReturnImage, $blnProtected, $isVisibleRootTrailPage);
+                $label_callback_orig_called = true;
+            }
+        }
+
+        // tl_article Fallback (Strukturansicht)
+        if (!$label_callback_orig_called && $dc->table === 'tl_article' && class_exists('tl_article')) {
+            $imageAttribute = $args[0] ?? '';
+            if (\is_array($imageAttribute) && class_exists('Contao\CoreBundle\String\HtmlAttributes')) {
+                $imageAttribute = (string) new \Contao\CoreBundle\String\HtmlAttributes($imageAttribute);
+            }
+            $blnReturnImage = (bool) ($args[1] ?? false);
+            $blnProtected = (bool) ($args[2] ?? false);
+
+            $article = new \tl_article();
+            if (method_exists($article, 'addIcon')) {
+                $label = $article->addIcon($row, $label, $dc, $imageAttribute, $blnReturnImage, $blnProtected);
                 $label_callback_orig_called = true;
             }
         }
@@ -111,6 +149,7 @@ class WorkflowFieldsListener
             $newsletter = new \tl_newsletter();
             if (method_exists($newsletter, 'listNewsletters')) {
                 $label = $newsletter->listNewsletters($row);
+                $label_callback_orig_called = true;
             }
         }
 
@@ -120,14 +159,15 @@ class WorkflowFieldsListener
                 $news = new \tl_news();
                 if (method_exists($news, 'addNews')) {
                     $label = $news->addNews($row, $label, $dc, $args);
+                    $label_callback_orig_called = true;
                 }
             }
 
             // Fallback für Contao 5+, falls tl_news nicht existiert oder addNews fehlschlägt
-            if ($label === '' || $label === $row['headline']) {
-                $date = Date::parse(Config::get('datimFormat'), $row['date']);
-                $time = Date::parse(Config::get('timeFormat'), $row['time']);
-                $label = sprintf('%s <span class="label-info">[%s %s]</span>', $row['headline'], $date, $time);
+            if (!$label_callback_orig_called && ($label === '' || $label === ($row['headline'] ?? ''))) {
+                $date = Date::parse(Config::get('datimFormat'), $row['date'] ?? time());
+                $time = Date::parse(Config::get('timeFormat'), $row['time'] ?? time());
+                $label = sprintf('%s <span class="label-info">[%s %s]</span>', $row['headline'] ?? '', $date, $time);
             }
         }
 
@@ -137,13 +177,14 @@ class WorkflowFieldsListener
                 $events = new \tl_calendar_events();
                 if (method_exists($events, 'listEvents')) {
                     $label = $events->listEvents($row, $label, $dc, $args);
+                    $label_callback_orig_called = true;
                 }
             }
 
             // Fallback für Contao 5+, falls tl_calendar_events nicht existiert oder listEvents fehlschlägt
-            if ($label === '' || $label === $row['title']) {
-                $date = Date::parse(Config::get('dateFormat'), $row['startTime']);
-                $label = sprintf('%s  <span class="label-info" >[%s] </span >', $row['title'], $date);
+            if (!$label_callback_orig_called && ($label === '' || $label === ($row['title'] ?? ''))) {
+                $date = Date::parse(Config::get('dateFormat'), $row['startTime'] ?? time());
+                $label = sprintf('%s  <span class="label-info">[%s]</span>', $row['title'] ?? '', $date);
             }
         }
 
@@ -152,18 +193,17 @@ class WorkflowFieldsListener
             $faq = new \tl_faq();
             if (method_exists($faq, 'listQuestions')) {
                 $label = $faq->listQuestions($row, $label, $dc, $args);
+                $label_callback_orig_called = true;
             }
         }
 
         // The original callback must finish the label first. This is
-        // especially important for tl_page: Contao adds the page icon, link
-        // and optional record ID there, and the exact markup differs between
-        // Contao versions. Appending the workflow status afterwards preserves
-        // the complete native label in both Contao 5.7 and 6.
-        return $this->normalizeLabelForContao($this->appendStatusToLabel($label, $row));
+        // especially important for tl_page and tl_article: Contao adds the icon, link
+        // and formatting there. Appending the workflow status afterwards preserves
+        // the complete native label.
+        return $this->appendStatusToLabel($label, $row);
     }
 
-    #[AsCallback(table: 'tl_article', target: 'list.sorting.child_record')]
     public function onChildRecord($row, ?DataContainer $dc = null): string
     {
         return $this->handleChildRecord($row, 'tl_article', $dc);
