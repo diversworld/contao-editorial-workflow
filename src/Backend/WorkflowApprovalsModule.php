@@ -3,20 +3,25 @@
 namespace Diversworld\ContaoEditorialWorkflow\Backend;
 
 use Contao\BackendModule;
+use Contao\DataContainer;
+use Contao\System;
 use Diversworld\ContaoEditorialWorkflow\Dashboard\ApprovalDashboard;
 use Diversworld\ContaoEditorialWorkflow\Workflow\WorkflowManager;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-#[AutoconfigureTag('contao.backend_module', ['module' => 'workflow_approvals'])]
+#[AutoconfigureTag('contao.backend_module', ['module' => 'editorial_workflow_approvals'])]
 class WorkflowApprovalsModule extends BackendModule
 {
     private ApprovalDashboard $dashboard;
     private WorkflowManager $workflowManager;
 
-    public function __construct(ApprovalDashboard $dashboard, WorkflowManager $workflowManager)
+    public function __construct(?DataContainer $dc = null)
     {
-        $this->dashboard = $dashboard;
-        $this->workflowManager = $workflowManager;
+        parent::__construct($dc);
+
+        $container = System::getContainer();
+        $this->dashboard = $container->get(ApprovalDashboard::class);
+        $this->workflowManager = $container->get(WorkflowManager::class);
     }
 
     /**
